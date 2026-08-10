@@ -1,0 +1,956 @@
+/* ==========================================================================
+   RESET & SYSTEM VARIABLES (AUCHAN DESIGN SYSTEM)
+   ========================================================================== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --bg-workspace: #f3f4f6;
+    /* Very light gray interface background */
+    --bg-sidebar: #ffffff;
+    /* Pure white sidebar */
+    --bg-card: #ffffff;
+    /* Pure white element containers */
+
+    --primary-color: #d6180b;
+    /* Auchan brand red accent */
+    --primary-hover: #b21207;
+    /* Hover red state */
+    --primary-light: rgba(214, 24, 11, 0.06);
+
+    --text-dark: #1f2937;
+    /* Dark gray for headings and main texts */
+    --text-muted: #4b5563;
+    /* Medium gray for descriptions/labels */
+    --text-light: #9ca3af;
+    /* Light gray for borders/placeholders */
+
+    --border-color: #e5e7eb;
+    /* Light gray borders */
+    --border-hover: #cbd5e1;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --shadow-lg: 0 10px 20px -5px rgba(0, 0, 0, 0.08), 0 8px 8px -6px rgba(0, 0, 0, 0.08);
+    --shadow-sheet: 0 20px 40px -10px rgba(0, 0, 0, 0.08);
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ==========================================================================
+   APP CONTAINER LAYOUT
+   ========================================================================== */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text-dark);
+    background-color: var(--bg-workspace);
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+.app-shell {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   SIDEBAR (LEFT PANEL DESIGN)
+   ========================================================================== */
+.sidebar {
+    background-color: var(--bg-sidebar);
+    border-right: 1px solid var(--border-color);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    gap: 20px;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.01);
+    z-index: 10;
+    overflow-y: auto;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.header-logo {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+}
+
+.sidebar-header h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text-dark);
+}
+
+.red-accent {
+    color: var(--primary-color);
+}
+
+/* Sidebar Section Blocks */
+.sidebar-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sidebar-section h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+}
+
+/* Forms Input Styles */
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.input-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+input[type="text"]::placeholder {
+    color: #9ca3af;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+input[type="text"] {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    width: 100%;
+    height: 40px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    background-color: #f9fafb;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    outline: none;
+    transition: var(--transition);
+}
+
+input[type="text"]:focus {
+    border-color: var(--primary-color);
+    background-color: #ffffff;
+}
+
+.select-container {
+    position: relative;
+    width: 100%;
+}
+
+select {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    width: 100%;
+    height: 40px;
+    padding: 8px 12px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--text-dark);
+    background-color: #f9fafb;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    appearance: none;
+    outline: none;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+select:focus {
+    border-color: var(--primary-color);
+    background-color: #ffffff;
+}
+
+.select-container::after {
+    content: "";
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid var(--text-muted);
+    pointer-events: none;
+}
+
+/* Button UI styling */
+.btn {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+}
+
+.btn-secondary {
+    background-color: #f9fafb;
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background-color: #f3f4f6;
+    color: var(--text-dark);
+}
+
+.btn-large {
+    height: 46px;
+    font-size: 0.9rem;
+    width: 100%;
+}
+
+/* Sidebar lists containers */
+.list-section {
+    flex: 1;
+    min-height: 0;
+}
+
+.barcodes-list-container {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background-color: #f9fafb;
+    padding: 10px;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 150px;
+}
+
+.empty-list-notice {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    text-align: center;
+    margin: auto;
+}
+
+/* List Item cards inside sidebar list */
+.barcode-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.barcode-list-item:hover {
+    border-color: var(--border-hover);
+}
+
+.barcode-list-item.selected {
+    border-left: 3px solid var(--primary-color);
+}
+
+.item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.item-info .item-val {
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.item-info .item-fmt {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: var(--text-light);
+}
+
+.btn-delete-item {
+    background: transparent;
+    border: none;
+    color: var(--text-light);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: var(--transition);
+}
+
+.btn-delete-item:hover {
+    color: var(--primary-color);
+    background-color: var(--primary-light);
+}
+
+/* Sidebar controls footer */
+.sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-color);
+}
+
+.sheets-saved-counter {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #10b981;
+    /* Green color to represent eco/page saving */
+    background-color: rgba(16, 185, 129, 0.08);
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    margin-top: 4px;
+    transition: var(--transition);
+    user-select: none;
+}
+
+.sheets-saved-counter svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    flex-shrink: 0;
+}
+
+.counter-text-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.35;
+}
+
+.eco-details {
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: #059669;
+    /* Darker green for readability */
+}
+
+/* ==========================================================================
+   CENTRAL APERCU WORKSPACE & A4 PRINT SHEET
+   ========================================================================== */
+.workspace-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    padding: 32px;
+    overflow: hidden;
+}
+
+.sheet-viewport {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+}
+
+.print-sheet {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sheet);
+    position: relative;
+    height: 100%;
+    aspect-ratio: 1 / 1.414;
+    /* Custom optimized screen ratio */
+    margin: 0 auto;
+    overflow: visible;
+}
+
+
+.sheet-placeholder {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-light);
+    pointer-events: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+    opacity: 0.75;
+}
+
+/* ==========================================================================
+   DRAGGABLE & RESIZABLE BARCODE CARD ELEMENTS
+   ========================================================================== */
+.draggable-barcode {
+    position: absolute;
+    background: #ffffff;
+    border: 1px solid transparent;
+    /* No visible border by default */
+    border-radius: var(--radius-md);
+    padding: 2.5% 3.5%;
+    cursor: move;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none;
+    /* No shadow by default */
+    min-width: 15%;
+    min-height: 6%;
+    box-sizing: border-box;
+    transition: box-shadow 0.15s, border-color 0.15s;
+    container-type: inline-size;
+    /* Sets the card as a container for query units */
+}
+
+.draggable-barcode svg {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+    object-fit: contain;
+    flex: 1;
+    /* Allows SVG to take up remaining height beneath the title */
+}
+
+/* Custom text label/title at the top of the card */
+.barcode-card-title {
+    font-size: 5cqw;
+    /* Proportional to card width */
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-dark);
+    letter-spacing: 0.05em;
+    margin-bottom: 2%;
+    text-align: center;
+    width: 100%;
+    user-select: none;
+    pointer-events: none;
+}
+
+.draggable-barcode:hover {
+    border-color: #9ca3af;
+    box-shadow: var(--shadow-md);
+}
+
+.draggable-barcode.selected {
+    border-color: var(--primary-color);
+}
+
+/* Resize corner handle icon */
+.barcode-resize-handle {
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    width: 10px;
+    height: 10px;
+    cursor: se-resize;
+    border-right: 2px solid var(--text-light);
+    border-bottom: 2px solid var(--text-light);
+    opacity: 0.4;
+    transition: var(--transition);
+}
+
+.draggable-barcode:hover .barcode-resize-handle,
+.draggable-barcode.selected .barcode-resize-handle {
+    opacity: 1;
+}
+
+.barcode-resize-handle:hover {
+    border-color: var(--primary-color);
+}
+
+/* Quick corner delete circle */
+.barcode-card-delete {
+    position: absolute;
+    top: -9px;
+    right: -9px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.draggable-barcode:hover .barcode-card-delete,
+.draggable-barcode.selected .barcode-card-delete {
+    opacity: 1;
+}
+
+/* Dynamic Inline Value Editing Input Overlay */
+.barcode-inline-edit-box {
+    position: absolute;
+    inset: 4px;
+    background: #ffffff;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    z-index: 50;
+}
+
+.barcode-inline-input input[type="text"] {
+    border: none !important;
+    outline: none;
+}
+
+.barcode-inline-input {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    border-radius: var(--radius-sm);
+    outline: none;
+    border: none;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   CUSTOM CONTEXT MENU
+   ========================================================================== */
+.custom-context-menu {
+    position: absolute;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 10000;
+    width: 190px;
+    padding: 4px 0;
+    animation: contextAnim 0.12s cubic-bezier(0, 0, 0.2, 1);
+}
+
+@keyframes contextAnim {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.custom-context-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.custom-context-menu li {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-dark);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    transition: var(--transition);
+}
+
+.custom-context-menu li svg {
+    width: 14px;
+    height: 14px;
+    color: var(--text-muted);
+}
+
+.custom-context-menu li:hover {
+    background-color: #f3f4f6;
+}
+
+.custom-context-menu li.menu-divider {
+    height: 1px;
+    background-color: var(--border-color);
+    padding: 0;
+    margin: 4px 0;
+}
+
+.custom-context-menu li.menu-danger {
+    color: var(--primary-color);
+}
+
+.custom-context-menu li.menu-danger svg {
+    color: var(--primary-color);
+}
+
+.custom-context-menu li.menu-danger:hover {
+    background-color: #fff5f5;
+}
+
+/* Submenu items list styling */
+.menu-submenu::after {
+    content: "›";
+    position: absolute;
+    right: 12px;
+    font-size: 1.1rem;
+    color: var(--text-light);
+}
+
+.submenu-list {
+    position: absolute;
+    left: 100%;
+    top: 0;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    display: none;
+    width: 190px;
+    padding: 4px 0;
+}
+
+.menu-submenu:hover .submenu-list {
+    display: block;
+}
+
+.custom-context-menu.submenu-up .submenu-list {
+    top: auto;
+    bottom: -4px;
+    /* aligned to bottom margin of parent list */
+}
+
+/* ==========================================================================
+   CUSTOM MODAL DIALOG
+   ========================================================================== */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    transition: opacity 0.25s ease;
+}
+
+.modal-backdrop.hidden {
+    display: none !important;
+}
+
+.modal-content {
+    background: #ffffff;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    width: 90%;
+    max-width: 420px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalFadeIn {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modal-header h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.btn-close-modal {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-light);
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    transition: color 0.15s;
+}
+
+.btn-close-modal:hover {
+    color: var(--primary-color);
+}
+
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.modal-body p {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.modal-body input {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--text-dark);
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-sizing: border-box;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.modal-body input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+/* Floating Help Button */
+.btn-floating-help {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-lg);
+    transition: var(--transition);
+    z-index: 1000;
+}
+
+.btn-floating-help:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px) scale(1.06);
+    box-shadow: 0 12px 20px -5px rgba(214, 24, 11, 0.3);
+}
+
+.btn-floating-help svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Help Modal Specifics */
+.modal-help-content {
+    max-width: 520px;
+    width: 95%;
+}
+
+.modal-help-body {
+    max-height: 420px;
+    overflow-y: auto;
+    padding-right: 6px;
+    gap: 16px;
+}
+
+.help-section h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0 0 10px 0;
+    padding-bottom: 6px;
+    border-bottom: 1.5px solid var(--border-color);
+}
+
+.help-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.help-section li {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+    position: relative;
+    padding-left: 14px;
+}
+
+.help-section li::before {
+    content: "•";
+    position: absolute;
+    left: 2px;
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+/* ==========================================================================
+   PRINT MEDIA STYLES
+   ========================================================================== */
+@page {
+    size: A4;
+    margin: 0;
+    /* Hides default browser header (date, URL) and footer (page number) */
+}
+
+@media print {
+    body {
+        background-color: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 100vh !important;
+        width: 100vw !important;
+        overflow: hidden !important;
+    }
+
+    body * {
+        visibility: hidden;
+    }
+
+    .workspace-area,
+    .print-sheet,
+    .print-sheet * {
+        visibility: visible;
+    }
+
+    .sidebar,
+    .custom-context-menu,
+    .sheet-placeholder,
+    .btn-floating-help,
+    .modal-backdrop {
+        display: none !important;
+    }
+
+    .app-shell {
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    .workspace-area {
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        height: 100vh !important;
+        width: 100vw !important;
+    }
+
+    .print-sheet {
+        border: none !important;
+        box-shadow: none !important;
+        width: 210mm !important;
+        /* Standard A4 size */
+        height: 297mm !important;
+        max-height: none !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        margin: 0 !important;
+        background: #ffffff !important;
+    }
+
+    .draggable-barcode {
+        box-shadow: none !important;
+        cursor: default !important;
+        border: none !important;
+        /* Hide border at print time */
+        background: #ffffff !important;
+    }
+
+    .barcode-resize-handle,
+    .barcode-card-delete,
+    .barcode-inline-edit-box {
+        display: none !important;
+    }
+}

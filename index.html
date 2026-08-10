@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de Codes-Barres Professionnel</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <!-- CSS stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="icon.png">
+    <!-- JsBarcode library dependency via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+</head>
+
+<body>
+    <div class="app-shell">
+        <!-- Sidebar layout on the left -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <!-- App logo icon -->
+                <img class="header-logo" src="icon.png" alt="EasyBar Logo">
+                <h2>Easy<span class="red-accent">Bar</span></h2>
+            </div>
+
+            <!-- Form: Create Barcode -->
+            <div class="sidebar-section">
+                <h3>Ajouter un code-barres</h3>
+                <div class="input-group">
+                    <label for="barcode-value-input">Valeur du code-barres</label>
+                    <input type="text" id="barcode-value-input" placeholder="Saisir la valeur..." autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <label for="barcode-format-select">Type / Symbologie</label>
+                    <div class="select-container">
+                        <select id="barcode-format-select">
+                            <option value="CODE128" selected>CODE128 (Standard)</option>
+                            <option value="EAN13">EAN-13 (Grande Distri.)</option>
+                            <option value="CODE39">CODE39 (Alphanumérique)</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="button" id="btn-add-barcode" class="btn btn-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Ajouter à la feuille
+                </button>
+            </div>
+
+            <!-- Operations: Print / Empty -->
+            <div class="sidebar-footer">
+                <button type="button" id="btn-print-sheet" class="btn btn-primary btn-large">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                        <rect x="6" y="14" width="12" height="8"></rect>
+                    </svg>
+                    Imprimer la page
+                </button>
+                <button type="button" id="btn-clear-sheet" class="btn btn-secondary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Vider la page
+                </button>
+                <div id="sheets-saved-counter" class="sheets-saved-counter">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 9.8A7 7 0 0 1 11 20z"></path><path d="M9 22v-4h4"></path></svg>
+                    <div class="counter-text-wrapper">
+                        <span id="sheets-saved-text">0 feuille sauvée</span>
+                        <span id="sheets-saved-eco-details" class="eco-details">0 arbre sauvé • 0L d'eau</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main workspace: A4 sheet display -->
+        <main class="workspace-area">
+            <div class="sheet-viewport">
+                <div id="print-sheet" class="print-sheet">
+                    <!-- Centered placeholder instruction when sheet is empty -->
+                    <div id="sheet-placeholder" class="sheet-placeholder">
+                        Glissez et déposez vos codes-barres ici
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Custom Right-Click Context Menu container -->
+    <div id="custom-context-menu" class="custom-context-menu hidden">
+        <ul>
+            <li id="menu-opt-edit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                </svg>
+                Modifier le texte
+            </li>
+            <li id="menu-opt-duplicate">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                Dupliquer
+            </li>
+            <li class="menu-submenu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                Changer le format
+                <ul class="submenu-list">
+                    <li onclick="window.setBarcodeFormat('CODE128')">CODE128</li>
+                    <li onclick="window.setBarcodeFormat('EAN13')">EAN-13</li>
+                    <li onclick="window.setBarcodeFormat('CODE39')">CODE39</li>
+                </ul>
+            </li>
+            <li class="menu-divider"></li>
+            <li id="menu-opt-delete" class="menu-danger">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                Supprimer
+            </li>
+        </ul>
+    </div>
+
+    <!-- Custom Modal Popup for Title/Prompt -->
+    <div id="title-modal" class="modal-backdrop hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Titre de l'étiquette</h2>
+                <button type="button" class="btn-close-modal" id="btn-close-title-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Saisissez le texte de l'en-tête (ex: FRAIS, SURG, POISSON...) :</p>
+                <input type="text" id="title-modal-input" placeholder="Aucun titre" maxlength="30">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btn-cancel-title-modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="btn-save-title-modal">Valider</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Help Button -->
+    <button id="btn-help" class="btn-floating-help" title="Aide & Raccourcis">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+    </button>
+
+    <!-- Help Modal Dialog -->
+    <div id="help-modal" class="modal-backdrop hidden">
+        <div class="modal-content modal-help-content">
+            <div class="modal-header">
+                <h2>Raccourcis & Commandes</h2>
+                <button type="button" class="btn-close-modal" id="btn-close-help-modal">&times;</button>
+            </div>
+            <div class="modal-body modal-help-body">
+                <div class="help-section">
+                    <h4>⌨️ Création & Raccourcis Clavier</h4>
+                    <ul>
+                        <li><strong>Ctrl + C / Ctrl + V</strong> : Duplique instantanément l'étiquette sélectionnée avec son titre et ses dimensions (décalée sur la feuille).</li>
+                        <li><strong>Ctrl + V (général)</strong> : Collez un texte/code depuis n'importe où pour générer une nouvelle étiquette.</li>
+                        <li><strong>SUPPR (Delete)</strong> : Supprime immédiatement l'étiquette sélectionnée.</li>
+                        <li><strong>Saisie Sidebar</strong> : Tapez une valeur, choisissez le type et cliquez sur "Ajouter à la feuille".</li>
+                    </ul>
+                </div>
+                <div class="help-section">
+                    <h4>🖱️ Clic-Droit sur une Étiquette</h4>
+                    <ul>
+                        <li><strong>Titre</strong> : Ajouter ou modifier un titre proportionnel (ex: FRAIS, PGC).</li>
+                        <li><strong>Modifier le code</strong> : Double-cliquez directement sur le code ou utilisez l'option.</li>
+                        <li><strong>Masquer/Afficher la valeur</strong> : Affiche ou masque la valeur textuelle sous les barres.</li>
+                        <li><strong>Alignement</strong> : Centrer horizontalement/verticalement ou aligner sur les arêtes.</li>
+                        <li><strong>Dupliquer / Formater</strong> : Duplique l'étiquette ou change son type (CODE128, EAN-13, CODE39).</li>
+                    </ul>
+                </div>
+                <div class="help-section">
+                    <h4>📄 Disposition sur la Feuille A4</h4>
+                    <ul>
+                        <li><strong>Déplacement</strong> : Glissez-déposez les étiquettes. Elles s'aimantent automatiquement sur une grille de 15px et se calent à 0 sur les bords (tolérance 25px).</li>
+                        <li><strong>Taille</strong> : Utilisez la poignée en bas à droite pour redimensionner.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="btn-close-help-ok">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS engine script -->
+    <script src="script.js"></script>
+</body>
+
+</html>

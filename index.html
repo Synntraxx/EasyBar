@@ -38,12 +38,24 @@
                 </div>
                 <div class="input-group">
                     <label for="barcode-format-select">Type / Symbologie</label>
-                    <div class="select-container">
-                        <select id="barcode-format-select">
+                    <div class="custom-select" id="custom-format-select">
+                        <select id="barcode-format-select" class="hidden-select">
                             <option value="CODE128" selected>CODE128 (Standard)</option>
                             <option value="EAN13">EAN-13 (Grande Distri.)</option>
                             <option value="CODE39">CODE39 (Alphanumérique)</option>
                         </select>
+                        <div class="custom-select-trigger">
+                            <span>CODE128 (Standard)</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                class="custom-select-arrow">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                        <div class="custom-select-dropdown">
+                            <div class="custom-select-option selected" data-value="CODE128">CODE128 (Standard)</div>
+                            <div class="custom-select-option" data-value="EAN13">EAN-13 (Grande Distri.)</div>
+                            <div class="custom-select-option" data-value="CODE39">CODE39 (Alphanumérique)</div>
+                        </div>
                     </div>
                 </div>
                 <button type="button" id="btn-add-barcode" class="btn btn-primary">
@@ -73,7 +85,10 @@
                     Vider la page
                 </button>
                 <div id="sheets-saved-counter" class="sheets-saved-counter">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 9.8A7 7 0 0 1 11 20z"></path><path d="M9 22v-4h4"></path></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 9.8A7 7 0 0 1 11 20z"></path>
+                        <path d="M9 22v-4h4"></path>
+                    </svg>
                     <div class="counter-text-wrapper">
                         <span id="sheets-saved-text">0 feuille sauvée</span>
                         <span id="sheets-saved-eco-details" class="eco-details">0 arbre sauvé • 0L d'eau</span>
@@ -88,8 +103,13 @@
                 <div id="print-sheet" class="print-sheet">
                     <!-- Centered placeholder instruction when sheet is empty -->
                     <div id="sheet-placeholder" class="sheet-placeholder">
-                        Glissez et déposez vos codes-barres ici
+                        Feuille d'impression format A4
                     </div>
+                </div>
+            </div>
+            <div class="workspace-tabs-container">
+                <div id="workspace-tabs" class="workspace-tabs">
+                    <!-- Dynamic tabs will be inserted here -->
                 </div>
             </div>
         </main>
@@ -143,7 +163,14 @@
                 <button type="button" class="btn-close-modal" id="btn-close-title-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <p>Saisissez le texte de l'en-tête (ex: FRAIS, SURG, POISSON...) :</p>
+                <p>Saisissez le texte de l'en-tête.</p>
+                <div class="title-shortcuts">
+                    <button type="button" class="shortcut-badge" data-value="FRAIS">FRAIS</button>
+                    <button type="button" class="shortcut-badge" data-value="POISSON">POISSON</button>
+                    <button type="button" class="shortcut-badge" data-value="SURG">SURG</button>
+                    <button type="button" class="shortcut-badge" data-value="FLEG">FLEG</button>
+                    <button type="button" class="shortcut-badge" data-value="FLEG BIO">FLEG BIO</button>
+                </div>
                 <input type="text" id="title-modal-input" placeholder="Aucun titre" maxlength="30">
             </div>
             <div class="modal-footer">
@@ -153,9 +180,63 @@
         </div>
     </div>
 
+    <!-- Print Selection Modal -->
+    <div id="print-modal" class="modal-backdrop hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Impression multipage</h2>
+                <button type="button" class="btn-close-modal" id="btn-close-print-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-muted);">Sélectionnez les pages que
+                    vous souhaitez imprimer :</p>
+                <div id="print-pages-list" class="print-pages-list">
+                    <!-- Dynamic checkboxes will go here -->
+                </div>
+                <div class="print-pages-actions" style="margin-top: 12px; display: flex; gap: 8px; font-size: 0.8rem;">
+                    <button type="button" class="btn-link" id="btn-select-all-pages"
+                        style="background: none; border: none; color: var(--primary-color); cursor: pointer; padding: 0; font-size: 0.9rem; font-weight: 600;font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;">Tout
+                        cocher</button>
+                    <span class="divider" style="color: var(--text-light);">/</span>
+                    <button type="button" class="btn-link" id="btn-deselect-all-pages"
+                        style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0; font-size: 0.9rem; font-weight: 600;font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;">Tout
+                        décocher</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btn-cancel-print-modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="btn-confirm-print">Lancer l'impression</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="confirm-modal" class="modal-backdrop hidden">
+        <div class="modal-content modal-confirm-content">
+            <div class="modal-header">
+                <h2 id="confirm-modal-title">Confirmation</h2>
+                <button type="button" class="btn-close-modal" id="btn-close-confirm-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-modal-message">Voulez-vous vraiment effectuer cette action ?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btn-cancel-confirm-modal">Annuler</button>
+                <button type="button" class="btn btn-primary btn-danger-action"
+                    id="btn-save-confirm-modal">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="print-output-container"></div>
+
     <!-- Floating Help Button -->
     <button id="btn-help" class="btn-floating-help" title="Aide & Raccourcis">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
     </button>
 
     <!-- Help Modal Dialog -->
@@ -167,28 +248,55 @@
             </div>
             <div class="modal-body modal-help-body">
                 <div class="help-section">
-                    <h4>⌨️ Création & Raccourcis Clavier</h4>
+                    <h4>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="help-icon"><rect x="2" y="4" width="20" height="12" rx="2" ry="2"></rect><line x1="6" y1="8" x2="6.01" y2="8"></line><line x1="10" y1="8" x2="10.01" y2="8"></line><line x1="14" y1="8" x2="14.01" y2="8"></line><line x1="18" y1="8" x2="18.01" y2="8"></line><line x1="6" y1="12" x2="6.01" y2="12"></line><line x1="18" y1="12" x2="18.01" y2="12"></line><line x1="10" y1="12" x2="14" y2="12"></line><path d="M6 20h12"></path></svg>
+                        Création & Raccourcis Clavier
+                    </h4>
                     <ul>
-                        <li><strong>Ctrl + C / Ctrl + V</strong> : Duplique instantanément l'étiquette sélectionnée avec son titre et ses dimensions (décalée sur la feuille).</li>
-                        <li><strong>Ctrl + V (général)</strong> : Collez un texte/code depuis n'importe où pour générer une nouvelle étiquette.</li>
+                        <li><strong>Ctrl + C / Ctrl + V</strong> : Duplique instantanément l'étiquette sélectionnée avec
+                            son titre et ses dimensions (décalée sur la feuille).</li>
+                        <li><strong>Ctrl + V (général)</strong> : Collez un texte/code depuis n'importe où pour générer
+                            une nouvelle étiquette.</li>
                         <li><strong>SUPPR (Delete)</strong> : Supprime immédiatement l'étiquette sélectionnée.</li>
-                        <li><strong>Saisie Sidebar</strong> : Tapez une valeur, choisissez le type et cliquez sur "Ajouter à la feuille".</li>
+                        <li><strong>Saisie Sidebar</strong> : Tapez une valeur, choisissez le type et cliquez sur
+                            "Ajouter à la feuille".</li>
                     </ul>
                 </div>
                 <div class="help-section">
-                    <h4>🖱️ Clic-Droit sur une Étiquette</h4>
+                    <h4>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="help-icon"><rect x="5" y="2" width="14" height="20" rx="7"></rect><path d="M12 2v8"></path></svg>
+                        Clic-Droit & Modificateurs
+                    </h4>
                     <ul>
-                        <li><strong>Titre</strong> : Ajouter ou modifier un titre proportionnel (ex: FRAIS, PGC).</li>
-                        <li><strong>Modifier le code</strong> : Double-cliquez directement sur le code ou utilisez l'option.</li>
-                        <li><strong>Masquer/Afficher la valeur</strong> : Affiche ou masque la valeur textuelle sous les barres.</li>
-                        <li><strong>Alignement</strong> : Centrer horizontalement/verticalement ou aligner sur les arêtes.</li>
-                        <li><strong>Dupliquer / Formater</strong> : Duplique l'étiquette ou change son type (CODE128, EAN-13, CODE39).</li>
+                        <li><strong>Titre (Raccourcis)</strong> : Modifiez le nom avec des raccourcis rapides (FRAIS, POISSON, etc.) qui valident instantanément au clic.</li>
+                        <li><strong>Modifier le code</strong> : Double-cliquez directement sur le code ou utilisez
+                            l'option.</li>
+                        <li><strong>Masquer/Afficher la valeur</strong> : Affiche ou masque la valeur textuelle sous les
+                            barres.</li>
+                        <li><strong>Alignement</strong> : Centrer horizontalement/verticalement ou aligner sur les
+                            arêtes.</li>
+                        <li><strong>Dupliquer / Formater</strong> : Duplique l'étiquette ou change son type (CODE128,
+                            EAN-13, CODE39).</li>
                     </ul>
                 </div>
                 <div class="help-section">
-                    <h4>📄 Disposition sur la Feuille A4</h4>
+                    <h4>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="help-icon"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        Impression intelligente
+                    </h4>
                     <ul>
-                        <li><strong>Déplacement</strong> : Glissez-déposez les étiquettes. Elles s'aimantent automatiquement sur une grille de 15px et se calent à 0 sur les bords (tolérance 25px).</li>
+                        <li><strong>Bouton d'impression</strong> : Imprime directement si 1 seule page, ou ouvre les paramètres si multipage (avec la page active sélectionnée par défaut).</li>
+                        <li><strong>Clic-Droit (Espace vide)</strong> : Permet de créer un code, imprimer, ou vider la feuille (désactivé si la page est vide).</li>
+                    </ul>
+                </div>
+                <div class="help-section">
+                    <h4>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="help-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        Disposition sur la Feuille A4
+                    </h4>
+                    <ul>
+                        <li><strong>Déplacement</strong> : Glissez-déposez les étiquettes. Elles s'aimantent
+                            automatiquement sur une grille de 15px et se calent à 0 sur les bords (tolérance 25px).</li>
                         <li><strong>Taille</strong> : Utilisez la poignée en bas à droite pour redimensionner.</li>
                     </ul>
                 </div>

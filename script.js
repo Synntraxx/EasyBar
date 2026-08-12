@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Multipage state
     let totalPages = 1;
     let activePage = 1;
+    let pageSettings = {}; // keyed by pageNumber: { gridType: 'free', showDate: false, dateValue: '' }
+    const localDate = new Date();
+    const today = `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, '0')}-${String(localDate.getDate()).padStart(2, '0')}`;
 
     // Target DOM Nodes
     const printSheet = document.getElementById('print-sheet');
@@ -15,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Sidebar forms
     const valueInput = document.getElementById('barcode-value-input');
     const formatSelect = document.getElementById('barcode-format-select');
+    const customFormatSelect = document.getElementById('custom-format-select');
     const btnAddBarcode = document.getElementById('btn-add-barcode');
     // General action buttons
     const btnPrintSheet = document.getElementById('btn-print-sheet');
@@ -41,6 +45,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const sheetsSavedText = document.getElementById('sheets-saved-text');
     const sheetsSavedEcoDetails = document.getElementById('sheets-saved-eco-details');
 
+    // Page settings DOM nodes
+    const dateInput = document.getElementById('page-date-input');
+    const btnGenerateDates = document.getElementById('btn-generate-dates');
+    const btnUnlockDateMode = document.getElementById('btn-unlock-date-mode');
+
     let activeDragElement = null;
     let startX = 0, startY = 0;
     let initialLeft = 0, initialTop = 0;
@@ -52,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     // CUSTOM SELECT DROPDOWN LOGIC
     // ==========================================================================
-    const customSelect = document.getElementById('custom-format-select');
+    const customSelect = customFormatSelect;
     if (customSelect) {
         const trigger = customSelect.querySelector('.custom-select-trigger');
         const triggerText = trigger.querySelector('span');
@@ -112,6 +121,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const format = formatSelect.value;
         if (!val) return;
 
+        const pageSet = getPageSettings(activePage);
+        if (pageSet && pageSet.isDateMode) {
+            showCustomAlert("Page bloquée", "Cette page est bloquée en mode date. Pour ajouter un code-barres, changez le modèle ou videz la page.");
+            return;
+        }
+
+        let limit = Infinity;
+        if (pageSet) {
+            if (pageSet.gridType === 'grid-12') limit = 12;
+            else if (pageSet.gridType === 'grid-24') limit = 24;
+            else if (pageSet.gridType === 'grid-8') limit = 8;
+        }
+        const currentCount = barcodes.filter(b => b.page === activePage).length;
+        if (currentCount >= limit) {
+            showCustomAlert("Limite atteinte", `Cette grille ne peut pas contenir plus de ${limit} étiquettes.`);
+            return;
+        }
+
         addNewBarcode(val, format);
         valueInput.value = ''; // Reset input after insertion
     });
@@ -140,11 +167,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Main barcode generation handler using percentage sizing for matching scale
-    function addNewBarcode(value, format, cardWPct = 34, cardHPct = 11, height = 55, width = 2, displayValue = true, title = "", leftPercent = null, topPercent = null, page = null) {
+    function addNewBarcode(value, format, cardWPct = 34, cardHPct = 11, height = 55, width = 2, displayValue = true, title = "", leftPercent = null, topPercent = null, page = null, isDateOnly = false) {
+        const finalPage = page !== null ? page : activePage;
+        const pageSet = getPageSettings(finalPage);
+
+        if (pageSet && pageSet.isDateMode && !isDateOnly) {
+            return;
+        }
+
+        let limit = Infinity;
+        if (pageSet) {
+            if (pageSet.gridType === 'grid-12') limit = 12;
+            else if (pageSet.gridType === 'grid-24') limit = 24;
+            else if (pageSet.gridType === 'grid-8') limit = 8;
+        }
+        const currentCount = barcodes.filter(b => b.page === finalPage).length;
+        if (currentCount >= limit) {
+            return;
+        }
+
         barcodeIdCounter++;
         const id = `bc_${Date.now()}_${barcodeIdCounter}`;
-
-        const finalPage = page !== null ? page : activePage;
 
         // Cascade positions, centering the default card horizontally on the sheet
         const count = barcodes.filter(b => b.page === finalPage).length;
@@ -152,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const finalTop = topPercent !== null ? topPercent : (15 + (count * 12) % 50);
 
         let finalTitle = title;
-        if (!finalTitle && leftPercent === null) {
+        if (!finalTitle && leftPercent === null && !isDateOnly) {
             const cleanVal = format === 'CODE39' ? value.toUpperCase() : value;
             if (cleanVal.endsWith('81035')) {
                 finalTitle = "FRAIS";
@@ -163,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const bcObj = {
             id,
-            value: format === 'CODE39' ? value.toUpperCase() : value,
+            value: isDateOnly ? value : (format === 'CODE39' ? value.toUpperCase() : value),
             format,
             cardWidthPercent: cardWPct,
             cardHeightPercent: cardHPct,
@@ -174,14 +217,19 @@ document.addEventListener('DOMContentLoaded', () => {
             topPercent: finalTop,
             title: finalTitle,
             page: finalPage,
+            isDateOnly,
             element: null
         };
 
-        if (finalPage === activePage) {
-            createBarcodeDOM(bcObj);
-        }
         barcodes.push(bcObj);
+
         if (finalPage === activePage) {
+            const pageSet = getPageSettings(activePage);
+            if (pageSet && pageSet.gridType !== 'free') {
+                applyPageSettingsToUI();
+            } else {
+                createBarcodeDOM(bcObj);
+            }
             selectBarcode(id);
         }
 
@@ -191,42 +239,130 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================================================
     // DOM BARCODE CARD INITIALIZATION & RENDER
     // ==========================================================================
+    function getPageSettings(pageNum) {
+        if (!pageSettings[pageNum]) {
+            pageSettings[pageNum] = { gridType: 'free', showDate: false, dateValue: '', isDateMode: false };
+        }
+        if (pageSettings[pageNum].isDateMode === undefined) {
+            pageSettings[pageNum].isDateMode = false;
+        }
+        return pageSettings[pageNum];
+    }
+
+    function getGridConfig(gridType) {
+        const configs = {
+            'grid-12': { cols: 2, rows: 6, wPct: 50, hPct: 16.6666 },
+            'grid-24': { cols: 3, rows: 8, wPct: 33.3333, hPct: 12.5 },
+            'grid-8': { cols: 2, rows: 4, wPct: 50, hPct: 25 }
+        };
+        return configs[gridType] || null;
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}`;
+        }
+        return dateStr;
+    }
+
+    // ==========================================================================
+    // DOM BARCODE CARD INITIALIZATION & RENDER
+    // ==========================================================================
     function createBarcodeDOM(bc) {
         const card = document.createElement('div');
         card.className = 'draggable-barcode';
-        card.style.left = `${bc.leftPercent}%`;
-        card.style.top = `${bc.topPercent}%`;
-        card.style.width = `${bc.cardWidthPercent}%`;
-        card.style.height = `${bc.cardHeightPercent}%`;
+        if (bc.isDateOnly) {
+            card.classList.add('date-only-card');
+        }
+
+        // Calculate grid layout overrides if page has grid settings
+        const pageSet = getPageSettings(bc.page);
+        let left = bc.leftPercent;
+        let top = bc.topPercent;
+        let w = bc.cardWidthPercent;
+        let h = bc.cardHeightPercent;
+
+        if (pageSet && pageSet.gridType !== 'free') {
+            const gridConfig = getGridConfig(pageSet.gridType);
+            if (gridConfig) {
+                // Find index of this barcode within its page
+                const pageBarcodes = barcodes.filter(b => b.page === bc.page);
+                const idx = pageBarcodes.indexOf(bc);
+                if (idx !== -1) {
+                    const col = idx % gridConfig.cols;
+                    const row = Math.floor(idx / gridConfig.cols);
+                    left = col * gridConfig.wPct;
+                    top = row * gridConfig.hPct;
+                    w = gridConfig.wPct;
+                    h = gridConfig.hPct;
+                }
+            }
+        }
+
+        card.style.left = `${left}%`;
+        card.style.top = `${top}%`;
+        card.style.width = `${w}%`;
+        card.style.height = `${h}%`;
         card.dataset.id = bc.id;
 
-        // Custom Title Label at the top of the card
-        const titleEl = document.createElement('div');
+        // Custom Title & Date Header at the top of the card
+        const headerEl = document.createElement('div');
+        headerEl.className = 'barcode-card-header';
+
+        const titleEl = document.createElement('span');
         titleEl.className = 'barcode-card-title';
         if (bc.title) {
             titleEl.textContent = bc.title.toUpperCase();
         } else {
             titleEl.classList.add('hidden');
         }
-        card.appendChild(titleEl);
+        headerEl.appendChild(titleEl);
 
-        // Vector SVG canvas
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.id = `svg_${bc.id}`;
-        card.appendChild(svg);
+        const dateEl = document.createElement('span');
+        dateEl.className = 'barcode-card-date';
+        if (!bc.isDateOnly && pageSet && pageSet.showDate && pageSet.dateValue) {
+            dateEl.textContent = formatDate(pageSet.dateValue);
+        } else {
+            dateEl.classList.add('hidden');
+        }
+        headerEl.appendChild(dateEl);
 
 
+        // Hide header entirely if both title and date are hidden
+        if (!bc.title && (bc.isDateOnly || !pageSet || !pageSet.showDate)) {
+            headerEl.classList.add('hidden');
+        }
+        card.appendChild(headerEl);
+
+        if (bc.isDateOnly) {
+            const dateValEl = document.createElement('div');
+            dateValEl.className = 'date-only-value';
+            dateValEl.textContent = formatDate(bc.value);
+            card.appendChild(dateValEl);
+        } else {
+            // Vector SVG canvas
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.id = `svg_${bc.id}`;
+            card.appendChild(svg);
+        }
 
         // Resize bottom-right handle
         const resizer = document.createElement('div');
         resizer.className = 'barcode-resize-handle';
+        if (pageSet && pageSet.gridType !== 'free') {
+            resizer.style.display = 'none';
+        }
         card.appendChild(resizer);
 
         printSheet.appendChild(card);
         bc.element = card;
 
         // Draw barcodes
-        renderBarcodeGraphics(bc);
+        if (!bc.isDateOnly) {
+            renderBarcodeGraphics(bc);
+        }
 
         // Card mouse click events
         card.addEventListener('mousedown', (e) => {
@@ -239,6 +375,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Double-click triggers superimposed edit input
         card.addEventListener('dblclick', (e) => {
             e.stopPropagation();
+            const pageSet = getPageSettings(activePage);
+            if (bc.isDateOnly && pageSet && pageSet.gridType !== 'free') {
+                return;
+            }
             startInlineEdit(bc);
         });
 
@@ -311,6 +451,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        // Adjust height for grid layouts
+        const pageSet = getPageSettings(bc.page);
+        let drawHeight = bc.height;
+        if (pageSet && pageSet.gridType !== 'free' && bc.element) {
+            const cardRect = bc.element.getBoundingClientRect();
+            // Automatically set height to about 45% of the actual card height in pixels
+            drawHeight = Math.max(25, Math.min(120, Math.floor(cardRect.height * 0.45)));
+        }
+
         try {
             JsBarcode(svg, bc.value, {
                 format: bc.format,
@@ -367,6 +516,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (e.target.closest('.barcode-resize-handle') ||
                 e.target.closest('.barcode-inline-edit-box')) {
+                return;
+            }
+
+            const bc = barcodes.find(b => b.id === element.dataset.id);
+            const pageSet = getPageSettings(activePage);
+            if (bc && bc.isDateOnly && pageSet && pageSet.gridType !== 'free') {
                 return;
             }
 
@@ -524,6 +679,48 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function showCustomAlert(title, message) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('confirm-modal');
+            const titleEl = document.getElementById('confirm-modal-title');
+            const messageEl = document.getElementById('confirm-modal-message');
+            const btnConfirm = document.getElementById('btn-save-confirm-modal');
+            const btnCancel = document.getElementById('btn-cancel-confirm-modal');
+            const btnClose = document.getElementById('btn-close-confirm-modal');
+
+            if (!modal || !titleEl || !messageEl || !btnConfirm || !btnCancel || !btnClose) {
+                alert(message);
+                resolve();
+                return;
+            }
+
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            
+            const originalConfirmText = btnConfirm.textContent;
+            btnConfirm.textContent = "OK";
+            const originalCancelDisplay = btnCancel.style.display;
+            btnCancel.style.display = 'none';
+
+            modal.classList.remove('hidden');
+
+            const handleClose = () => {
+                modal.classList.add('hidden');
+                btnConfirm.textContent = originalConfirmText;
+                btnCancel.style.display = originalCancelDisplay;
+                
+                btnConfirm.removeEventListener('click', handleClose);
+                btnCancel.removeEventListener('click', handleClose);
+                btnClose.removeEventListener('click', handleClose);
+                resolve();
+            };
+
+            btnConfirm.addEventListener('click', handleClose);
+            btnCancel.addEventListener('click', handleClose);
+            btnClose.addEventListener('click', handleClose);
+        });
+    }
+
     async function deleteBarcode(id) {
         const idx = barcodes.findIndex(b => b.id === id);
         if (idx !== -1) {
@@ -533,13 +730,18 @@ document.addEventListener('DOMContentLoaded', () => {
             );
             if (confirmed) {
                 const bc = barcodes[idx];
-                if (bc.element) {
-                    bc.element.remove();
-                }
                 barcodes.splice(idx, 1);
                 if (selectedBarcodeId === id) {
                     unselectBarcode();
                 }
+
+                const pageSet = getPageSettings(activePage);
+                if (pageSet && pageSet.gridType !== 'free') {
+                    applyPageSettingsToUI();
+                } else if (bc.element) {
+                    bc.element.remove();
+                }
+
                 updatePlaceholder();
             }
         }
@@ -553,8 +755,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         barcodes = barcodes.filter(bc => bc.page !== activePage);
+        
+        const pageSet = getPageSettings(activePage);
+        if (pageSet) {
+            pageSet.isDateMode = false;
+        }
+
         unselectBarcode();
-        updatePlaceholder();
+        applyPageSettingsToUI();
+        renderTabs();
+        saveState();
     }
 
     btnClearSheet.addEventListener('click', async () => {
@@ -623,6 +833,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const state = {
             totalPages,
             activePage,
+            pageSettings,
             barcodes: barcodes.map(bc => ({
                 value: bc.value,
                 format: bc.format,
@@ -634,19 +845,68 @@ document.addEventListener('DOMContentLoaded', () => {
                 leftPercent: bc.leftPercent,
                 topPercent: bc.topPercent,
                 title: bc.title,
-                page: bc.page || 1
+                page: bc.page || 1,
+                isDateOnly: bc.isDateOnly || false
             }))
         };
-        localStorage.setItem('easybar_state_v2', JSON.stringify(state));
+        localStorage.setItem('easybar_state_v3', JSON.stringify(state));
     }
 
     function loadState() {
-        let saved = localStorage.getItem('easybar_state_v2');
+        let saved = localStorage.getItem('easybar_state_v3');
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
                 totalPages = parsed.totalPages || 1;
                 activePage = parsed.activePage || 1;
+                pageSettings = parsed.pageSettings || {};
+
+                // Ensure every page has default settings if missing
+                for (let i = 1; i <= totalPages; i++) {
+                    if (!pageSettings[i]) {
+                        pageSettings[i] = { gridType: 'free', showDate: false, dateValue: '', isDateMode: false };
+                    }
+                    if (pageSettings[i].isDateMode === undefined) {
+                        pageSettings[i].isDateMode = false;
+                    }
+                }
+
+                if (Array.isArray(parsed.barcodes)) {
+                    parsed.barcodes.forEach(item => {
+                        addNewBarcode(
+                            item.value,
+                            item.format,
+                            item.cardWidthPercent,
+                            item.cardHeightPercent,
+                            item.height,
+                            item.width,
+                            item.displayValue,
+                            item.title,
+                            item.leftPercent,
+                            item.topPercent,
+                            item.page || 1,
+                            item.isDateOnly || false
+                        );
+                    });
+                    return true;
+                }
+            } catch (e) {
+                console.error("Error loading saved state v3:", e);
+            }
+        }
+
+        // Migrate from v2
+        saved = localStorage.getItem('easybar_state_v2');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                totalPages = parsed.totalPages || 1;
+                activePage = parsed.activePage || 1;
+                pageSettings = {};
+                for (let i = 1; i <= totalPages; i++) {
+                    pageSettings[i] = { gridType: 'free', showDate: false, dateValue: '' };
+                }
+
                 if (Array.isArray(parsed.barcodes)) {
                     parsed.barcodes.forEach(item => {
                         addNewBarcode(
@@ -666,7 +926,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return true;
                 }
             } catch (e) {
-                console.error("Error loading saved state v2:", e);
+                console.error("Error migrating saved state v2:", e);
             }
         }
 
@@ -678,6 +938,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (Array.isArray(parsed) && parsed.length > 0) {
                     totalPages = 1;
                     activePage = 1;
+                    pageSettings = { 1: { gridType: 'free', showDate: false, dateValue: '' } };
                     parsed.forEach(item => {
                         addNewBarcode(
                             item.value,
@@ -704,10 +965,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updatePlaceholder() {
         const pageBarcodes = barcodes.filter(bc => bc.page === activePage);
-        if (pageBarcodes.length > 0) {
-            sheetPlaceholder.classList.add('hidden');
-        } else {
-            sheetPlaceholder.classList.remove('hidden');
+        if (sheetPlaceholder) {
+            if (pageBarcodes.length > 0) {
+                sheetPlaceholder.classList.add('hidden');
+            } else {
+                sheetPlaceholder.classList.remove('hidden');
+            }
         }
 
         if (btnClearSheet) {
@@ -752,13 +1015,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Update title element on the DOM
                 const titleEl = card.querySelector('.barcode-card-title');
-                if (titleEl) {
+                const headerEl = card.querySelector('.barcode-card-header');
+                if (titleEl && headerEl) {
                     if (bc.title) {
                         titleEl.textContent = bc.title.toUpperCase();
                         titleEl.classList.remove('hidden');
+                        headerEl.classList.remove('hidden');
                     } else {
                         titleEl.textContent = '';
                         titleEl.classList.add('hidden');
+                        const dateEl = card.querySelector('.barcode-card-date');
+                        if (!dateEl || dateEl.classList.contains('hidden')) {
+                            headerEl.classList.add('hidden');
+                        }
                     }
                 }
 
@@ -805,10 +1074,22 @@ document.addEventListener('DOMContentLoaded', () => {
             selectBarcode(contextMenuTargetId);
 
             const bc = barcodes.find(b => b.id === contextMenuTargetId);
-            const hasTitle = bc && bc.title;
-            const showValue = bc && bc.displayValue;
+            const pageSet = getPageSettings(activePage);
+            
+            if (bc && bc.isDateOnly && pageSet && pageSet.gridType !== 'free') {
+                contextMenu.innerHTML = `
+                    <ul>
+                        <li onclick="window.triggerContextMenuDelete()" class="menu-danger">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            Supprimer
+                        </li>
+                    </ul>
+                `;
+            } else {
+                const hasTitle = bc && bc.title;
+                const showValue = bc && bc.displayValue;
 
-            contextMenu.innerHTML = `
+                contextMenu.innerHTML = `
                 <ul>
                     <li onclick="window.triggerContextMenuEditTitle()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
@@ -894,6 +1175,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </li>
                 </ul>
             `;
+            }
         } else {
             contextMenuTargetId = null;
             const pageBarcodesCount = barcodes.filter(bc => bc.page === activePage).length;
@@ -974,13 +1256,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const finalTitle = titleModalInput.value.trim();
             currentEditingBarcodeForTitle.title = finalTitle;
             const titleEl = currentEditingBarcodeForTitle.element.querySelector('.barcode-card-title');
-            if (titleEl) {
+            const headerEl = currentEditingBarcodeForTitle.element.querySelector('.barcode-card-header');
+            if (titleEl && headerEl) {
                 if (finalTitle) {
                     titleEl.textContent = finalTitle.toUpperCase();
                     titleEl.classList.remove('hidden');
+                    headerEl.classList.remove('hidden');
                 } else {
                     titleEl.textContent = '';
                     titleEl.classList.add('hidden');
+                    const dateEl = currentEditingBarcodeForTitle.element.querySelector('.barcode-card-date');
+                    if (!dateEl || dateEl.classList.contains('hidden')) {
+                        headerEl.classList.add('hidden');
+                    }
                 }
             }
         }
@@ -1203,6 +1491,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         e.preventDefault();
 
+        const pageSet = getPageSettings(activePage);
+        if (pageSet && pageSet.isDateMode) {
+            showCustomAlert("Page bloquée", "Cette page est bloquée en mode date. Pour ajouter un code-barres, changez le modèle ou videz la page.");
+            return;
+        }
+
+        let limit = Infinity;
+        if (pageSet) {
+            if (pageSet.gridType === 'grid-12') limit = 12;
+            else if (pageSet.gridType === 'grid-24') limit = 24;
+            else if (pageSet.gridType === 'grid-8') limit = 8;
+        }
+        const currentCount = barcodes.filter(b => b.page === activePage).length;
+        if (currentCount >= limit) {
+            showCustomAlert("Limite atteinte", `Cette grille ne peut pas contenir plus de ${limit} étiquettes.`);
+            return;
+        }
+
         // Retrieve plain text content from the clipboard
         const pastedText = (e.clipboardData || window.clipboardData).getData('text').trim();
         if (pastedText) {
@@ -1389,6 +1695,22 @@ document.addEventListener('DOMContentLoaded', () => {
             tabText.textContent = `Page ${i}`;
             tab.appendChild(tabText);
 
+            // Tab status icon (Date mode / FLEG)
+            const pageSet = getPageSettings(i);
+            if (pageSet && pageSet.isDateMode) {
+                const calIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                calIcon.setAttribute('viewBox', '0 0 24 24');
+                calIcon.setAttribute('fill', 'none');
+                calIcon.setAttribute('stroke', 'currentColor');
+                calIcon.setAttribute('stroke-width', '2.5');
+                calIcon.style.width = '12px';
+                calIcon.style.height = '12px';
+                calIcon.style.display = 'block';
+                calIcon.style.color = 'inherit';
+                calIcon.innerHTML = `<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>`;
+                tab.appendChild(calIcon);
+            }
+
             // Click to switch page
             tab.addEventListener('click', (e) => {
                 if (e.target.closest('.workspace-tab-delete')) return;
@@ -1400,7 +1722,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const delBtn = document.createElement('span');
                 delBtn.className = 'workspace-tab-delete';
                 delBtn.innerHTML = `
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width: 15px; height: 15px; display: block;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width: 10px; height: 10px; display: block;">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
@@ -1470,26 +1792,20 @@ document.addEventListener('DOMContentLoaded', () => {
         unselectBarcode();
         activePage = pageNumber;
 
-        // Remove all current barcode DOM elements
-        document.querySelectorAll('.draggable-barcode').forEach(card => card.remove());
-
-        // Re-create DOM elements for new active page
-        barcodes.forEach(bc => {
-            if (bc.page === activePage) {
-                createBarcodeDOM(bc);
-            }
-        });
+        applyPageSettingsToUI();
 
         renderTabs();
-        updatePlaceholder();
         showPageToast(pageNumber);
+        saveState();
     }
 
     function addPage() {
         if (totalPages >= 4) return;
         totalPages++;
+        pageSettings[totalPages] = { gridType: 'free', showDate: false, dateValue: '', isDateMode: false };
         switchPage(totalPages);
         updatePrintButtonLabel();
+        saveState();
     }
 
     async function deletePage(pageNumber) {
@@ -1509,12 +1825,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
+            // Shift page settings for pages higher than the deleted page
+            for (let p = pageNumber; p < totalPages; p++) {
+                pageSettings[p] = pageSettings[p + 1];
+            }
+            delete pageSettings[totalPages];
+
             totalPages--;
             if (activePage > totalPages) {
                 activePage = totalPages;
             }
             switchPage(activePage);
             updatePrintButtonLabel();
+            saveState();
         }
     }
 
@@ -1637,25 +1960,85 @@ document.addEventListener('DOMContentLoaded', () => {
             const sheet = document.createElement('div');
             sheet.className = 'print-sheet';
 
+            // Apply grid template class if active
+            const pageSet = getPageSettings(pageNum);
+            if (pageSet && pageSet.gridType !== 'free') {
+                sheet.classList.add(`template-${pageSet.gridType}`);
+            }
+
             const pageBarcodes = barcodes.filter(bc => bc.page === pageNum);
+
             pageBarcodes.forEach(bc => {
                 const card = document.createElement('div');
                 card.className = 'draggable-barcode';
-                card.style.left = `${bc.leftPercent}%`;
-                card.style.top = `${bc.topPercent}%`;
-                card.style.width = `${bc.cardWidthPercent}%`;
-                card.style.height = `${bc.cardHeightPercent}%`;
-
-                if (bc.title) {
-                    const titleEl = document.createElement('div');
-                    titleEl.className = 'barcode-card-title';
-                    titleEl.textContent = bc.title.toUpperCase();
-                    card.appendChild(titleEl);
+                if (bc.isDateOnly) {
+                    card.classList.add('date-only-card');
                 }
 
-                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                svg.id = `print_svg_${bc.id}`;
-                card.appendChild(svg);
+                // Calculate grid positions if active
+                let left = bc.leftPercent;
+                let top = bc.topPercent;
+                let w = bc.cardWidthPercent;
+                let h = bc.cardHeightPercent;
+
+                if (pageSet && pageSet.gridType !== 'free') {
+                    const gridConfig = getGridConfig(pageSet.gridType);
+                    if (gridConfig) {
+                        const idx = pageBarcodes.indexOf(bc);
+                        if (idx !== -1) {
+                            const col = idx % gridConfig.cols;
+                            const row = Math.floor(idx / gridConfig.cols);
+                            left = col * gridConfig.wPct;
+                            top = row * gridConfig.hPct;
+                            w = gridConfig.wPct;
+                            h = gridConfig.hPct;
+                        }
+                    }
+                }
+
+                card.style.left = `${left}%`;
+                card.style.top = `${top}%`;
+                card.style.width = `${w}%`;
+                card.style.height = `${h}%`;
+
+                // Add header with title
+                const headerEl = document.createElement('div');
+                headerEl.className = 'barcode-card-header';
+
+                const titleEl = document.createElement('span');
+                titleEl.className = 'barcode-card-title';
+                if (bc.title) {
+                    titleEl.textContent = bc.title.toUpperCase();
+                } else {
+                    titleEl.classList.add('hidden');
+                }
+                headerEl.appendChild(titleEl);
+
+                const dateEl = document.createElement('span');
+                dateEl.className = 'barcode-card-date';
+                if (!bc.isDateOnly && pageSet && pageSet.showDate && pageSet.dateValue) {
+                    dateEl.textContent = formatDate(pageSet.dateValue);
+                } else {
+                    dateEl.classList.add('hidden');
+                }
+                headerEl.appendChild(dateEl);
+
+                if (!bc.title && (bc.isDateOnly || !pageSet || !pageSet.showDate)) {
+                    headerEl.classList.add('hidden');
+                }
+                card.appendChild(headerEl);
+
+                if (bc.isDateOnly) {
+                    const dateValEl = document.createElement('div');
+                    dateValEl.className = 'date-only-value';
+                    dateValEl.textContent = formatDate(bc.value);
+                    card.appendChild(dateValEl);
+                } else {
+                    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    svg.id = `print_svg_${bc.id}`;
+                    card.appendChild(svg);
+                }
+
                 sheet.appendChild(card);
             });
 
@@ -1663,12 +2046,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Re-render barcode images inside the newly created SVG nodes
             pageBarcodes.forEach(bc => {
+                if (bc.isDateOnly) return;
                 const svg = sheet.querySelector(`#print_svg_${bc.id}`);
                 if (svg) {
+                    let drawHeight = bc.height;
+                    if (pageSet && pageSet.gridType !== 'free') {
+                        const cardRect = svg.parentElement.getBoundingClientRect();
+                        drawHeight = Math.max(25, Math.min(120, Math.floor(cardRect.height * 0.45)));
+                    }
+
                     try {
                         JsBarcode(svg, bc.value, {
                             format: bc.format,
-                            height: bc.height,
+                            height: drawHeight,
                             width: bc.width,
                             displayValue: bc.displayValue,
                             background: "transparent",
@@ -1710,10 +2100,268 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ==========================================================================
+    // CUSTOM GRID SELECT DROPDOWN LOGIC
+    // ==========================================================================
+    const customGridSelect = document.getElementById('custom-grid-select');
+    const gridSelect = document.getElementById('page-grid-select');
+    if (customGridSelect && gridSelect) {
+        const trigger = customGridSelect.querySelector('.custom-select-trigger');
+        const triggerText = trigger.querySelector('span');
+        const options = customGridSelect.querySelectorAll('.custom-select-option');
+
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            customGridSelect.classList.toggle('active');
+        });
+
+        options.forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                e.stopPropagation();
+                
+                // Update selected classes
+                options.forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+
+                // Update text display
+                triggerText.textContent = opt.textContent;
+
+                // Sync the actual hidden select and dispatch change event
+                gridSelect.value = opt.dataset.value;
+                gridSelect.dispatchEvent(new Event('change'));
+
+                customGridSelect.classList.remove('active');
+            });
+        });
+
+        document.addEventListener('click', () => {
+            customGridSelect.classList.remove('active');
+        });
+    }
+
+    if (gridSelect) {
+        gridSelect.addEventListener('change', () => {
+            const pageSet = getPageSettings(activePage);
+            pageSet.gridType = gridSelect.value;
+
+            // Limit barcodes to the new grid capacity to prevent overflow!
+            let limit = Infinity;
+            if (pageSet.gridType === 'grid-12') limit = 12;
+            else if (pageSet.gridType === 'grid-24') limit = 24;
+            else if (pageSet.gridType === 'grid-8') limit = 8;
+
+            const pageBarcodes = barcodes.filter(bc => bc.page === activePage);
+            if (pageBarcodes.length > limit) {
+                const toKeep = pageBarcodes.slice(0, limit);
+                const toRemove = pageBarcodes.slice(limit);
+                
+                // Remove elements from DOM
+                toRemove.forEach(bc => {
+                    if (bc.element) bc.element.remove();
+                });
+
+                // Update global barcodes array
+                barcodes = barcodes.filter(bc => bc.page !== activePage || toKeep.includes(bc));
+            }
+
+            applyPageSettingsToUI();
+            saveState();
+        });
+    }
+
+    if (btnGenerateDates) {
+        btnGenerateDates.addEventListener('click', () => {
+            const dateVal = dateInput.value || today;
+
+            const activeBarcodesCount = barcodes.filter(bc => bc.page === activePage).length;
+            if (activeBarcodesCount > 0) {
+                showCustomConfirm(
+                    "Étiquettes FLEG",
+                    "Voulez-vous remplacer les étiquettes de cette page par des étiquettes de date FLEG ?"
+                ).then(confirmed => {
+                    if (confirmed) {
+                        fillPageWithDates(dateVal, 'grid-12');
+                    }
+                });
+            } else {
+                fillPageWithDates(dateVal, 'grid-12');
+            }
+        });
+    }
+    if (btnUnlockDateMode) {
+        btnUnlockDateMode.addEventListener('click', () => {
+            showCustomConfirm(
+                "Quitter le mode FLEG",
+                "Voulez-vous quitter le mode FLEG et réinitialiser cette page ?"
+            ).then(confirmed => {
+                if (confirmed) {
+                    const pageSet = getPageSettings(activePage);
+                    if (pageSet) {
+                        pageSet.isDateMode = false;
+                        pageSet.gridType = 'free';
+                    }
+                    clearAllBarcodes();
+                }
+            });
+        });
+    }
+
+    function fillPageWithDates(dateVal, gridType) {
+        clearAllBarcodes();
+
+        const pageSet = getPageSettings(activePage);
+        if (pageSet) {
+            pageSet.isDateMode = true;
+            pageSet.dateValue = dateVal;
+            pageSet.gridType = gridType;
+        }
+
+        let count = 0;
+        if (gridType === 'grid-12') count = 12;
+        else if (gridType === 'grid-24') count = 24;
+        else if (gridType === 'grid-8') count = 8;
+        else count = 1; // free mode
+
+        let w = 34;
+        let h = 11;
+        const gridConfig = getGridConfig(gridType);
+        if (gridConfig) {
+            w = gridConfig.wPct;
+            h = gridConfig.hPct;
+        }
+
+        for (let i = 0; i < count; i++) {
+            addNewBarcode(dateVal, 'CODE128', w, h, 55, 2, true, '', null, null, activePage, true);
+        }
+
+        applyPageSettingsToUI();
+        renderTabs();
+        saveState();
+    }
+
+    if (dateInput) {
+        dateInput.value = today;
+        dateInput.addEventListener('change', () => {
+            const pageSet = getPageSettings(activePage);
+            pageSet.dateValue = dateInput.value;
+            
+            // Sync all date-only labels on the active page
+            barcodes.forEach(bc => {
+                if (bc.page === activePage && bc.isDateOnly) {
+                    bc.value = dateInput.value;
+                    const dateValEl = bc.element ? bc.element.querySelector('.date-only-value') : null;
+                    if (dateValEl) {
+                        dateValEl.textContent = formatDate(bc.value);
+                    }
+                }
+            });
+
+            saveState();
+        });
+    }
+
+    function applyPageSettingsToUI() {
+        const pageSet = getPageSettings(activePage);
+
+        // Update grid select value
+        if (gridSelect) {
+            gridSelect.value = pageSet.gridType;
+            if (customGridSelect) {
+                const triggerText = customGridSelect.querySelector('.custom-select-trigger span');
+                const options = customGridSelect.querySelectorAll('.custom-select-option');
+                const targetOpt = Array.from(options).find(opt => opt.dataset.value === pageSet.gridType);
+                if (targetOpt) {
+                    options.forEach(o => o.classList.remove('selected'));
+                    targetOpt.classList.add('selected');
+                    if (triggerText) triggerText.textContent = targetOpt.textContent;
+                }
+
+                // Block grid changes if page is in date mode
+                if (pageSet.isDateMode) {
+                    customGridSelect.style.opacity = '0.5';
+                    customGridSelect.style.pointerEvents = 'none';
+                    customGridSelect.setAttribute('title', "Changez de mode pour modifier le gabarit.");
+                } else {
+                    customGridSelect.style.opacity = '1';
+                    customGridSelect.style.pointerEvents = 'auto';
+                    customGridSelect.removeAttribute('title');
+                }
+            }
+        }
+
+        // Update date input
+        if (dateInput) {
+            dateInput.value = pageSet.dateValue || today;
+        }
+
+        // Update date mode status and Add button state
+        const statusEl = document.getElementById('date-mode-status');
+        if (statusEl) {
+            statusEl.style.display = pageSet.isDateMode ? 'flex' : 'none';
+        }
+
+        if (btnAddBarcode) {
+            if (pageSet.isDateMode) {
+                btnAddBarcode.style.opacity = '0.5';
+                btnAddBarcode.style.pointerEvents = 'none';
+                btnAddBarcode.setAttribute('title', "Cette page est bloquée en mode date.");
+            } else {
+                btnAddBarcode.style.opacity = '1';
+                btnAddBarcode.style.pointerEvents = 'auto';
+                btnAddBarcode.removeAttribute('title');
+            }
+        }
+
+        if (valueInput) {
+            if (pageSet.isDateMode) {
+                valueInput.disabled = true;
+                valueInput.style.opacity = '0.5';
+                valueInput.setAttribute('title', "Cette page est bloquée en mode date.");
+            } else {
+                valueInput.disabled = false;
+                valueInput.style.opacity = '1';
+                valueInput.removeAttribute('title');
+            }
+        }
+
+        if (customFormatSelect) {
+            if (pageSet.isDateMode) {
+                customFormatSelect.style.opacity = '0.5';
+                customFormatSelect.style.pointerEvents = 'none';
+                customFormatSelect.setAttribute('title', "Cette page est bloquée en mode date.");
+            } else {
+                customFormatSelect.style.opacity = '1';
+                customFormatSelect.style.pointerEvents = 'auto';
+                customFormatSelect.removeAttribute('title');
+            }
+        }
+
+        // Apply grid template class to sheet
+        if (printSheet) {
+            printSheet.className = 'print-sheet';
+            if (pageSet.gridType !== 'free') {
+                printSheet.classList.add(`template-${pageSet.gridType}`);
+            }
+        }
+
+        // Redraw all barcodes of active page
+        document.querySelectorAll('.draggable-barcode').forEach(card => card.remove());
+        barcodes.forEach(bc => {
+            if (bc.page === activePage) {
+                createBarcodeDOM(bc);
+            }
+        });
+
+        updatePlaceholder();
+    }
+
+
+
     // Prepopulate A4 workspace with saved barcodes, or one centered demo barcode on init if empty
     if (!loadState()) {
         addNewBarcode("AUCHAN-35002", "CODE128");
     }
+    applyPageSettingsToUI();
     renderTabs();
     updatePrintButtonLabel();
 });

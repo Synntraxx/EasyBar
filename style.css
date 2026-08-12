@@ -142,7 +142,8 @@ input[type="text"]::placeholder {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-input[type="text"] {
+input[type="text"],
+.date-input {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     width: 100%;
     height: 40px;
@@ -157,7 +158,8 @@ input[type="text"] {
     transition: var(--transition);
 }
 
-input[type="text"]:focus {
+input[type="text"]:focus,
+.date-input:focus {
     border-color: var(--primary-color);
     background-color: #ffffff;
 }
@@ -244,6 +246,7 @@ input[type="text"]:focus {
 .custom-select-option {
     border-radius: 5px;
     padding: 10px 12px;
+    margin-bottom: 5px;
     font-size: 0.8rem;
     font-weight: 600;
     color: var(--text-muted);
@@ -267,7 +270,7 @@ input[type="text"]:focus {
 }
 
 .custom-select-option:last-child {
-    border-radius: 0 0 6px 6px;
+    margin-bottom: 0;
 }
 
 /* Button UI styling */
@@ -404,21 +407,52 @@ input[type="text"]:focus {
     overflow: visible;
 }
 
-
-.sheet-placeholder {
+/* Print sheet grid overlay templates */
+.print-sheet.template-grid-12::before,
+.print-sheet.template-grid-24::before,
+.print-sheet.template-grid-8::before {
+    content: "";
     position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--text-light);
+    inset: 0;
     pointer-events: none;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    text-align: center;
-    opacity: 0.75;
+    border: 1px dashed rgba(0, 0, 0, 0.12);
+    z-index: 1;
+    /* behind barcodes but on top of placeholder */
+    border-radius: inherit;
 }
+
+.print-sheet.template-grid-12::before {
+    background-image:
+        linear-gradient(to right, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px);
+    background-size: 50% 16.6666%;
+    /* 2 cols, 6 rows */
+}
+
+.print-sheet.template-grid-24::before {
+    background-image:
+        linear-gradient(to right, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px);
+    background-size: 33.3333% 12.5%;
+    /* 3 cols, 8 rows */
+}
+
+.print-sheet.template-grid-8::before {
+    background-image:
+        linear-gradient(to right, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px);
+    background-size: 50% 25%;
+    /* 2 cols, 4 rows */
+}
+
+/* Hide grid guidelines during printing */
+@media print {
+    #print-output-container .print-sheet::before {
+        display: none !important;
+        background-image: none !important;
+    }
+}
+
 
 /* ==========================================================================
    DRAGGABLE & RESIZABLE BARCODE CARD ELEMENTS
@@ -461,7 +495,18 @@ input[type="text"]:focus {
     font-weight: 600 !important;
 }
 
-/* Custom text label/title at the top of the card */
+/* Custom text label/header at the top of the card */
+.barcode-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 2%;
+    user-select: none;
+    pointer-events: none;
+    gap: 8px;
+}
+
 .barcode-card-title {
     font-size: 5cqw;
     /* Proportional to card width */
@@ -469,11 +514,81 @@ input[type="text"]:focus {
     text-transform: uppercase;
     color: var(--text-dark);
     letter-spacing: 0.05em;
-    margin-bottom: 2%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     text-align: center;
     width: 100%;
+}
+
+/* Left-align if the date is also visible next to it */
+.barcode-card-header:not(:has(.barcode-card-date.hidden)) .barcode-card-title {
+    text-align: left;
+    width: auto;
+    flex: 1;
+}
+
+.barcode-card-date {
+    font-size: 4.2cqw;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+}
+
+/* Date-only card styles */
+.draggable-barcode.date-only-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6% 4%;
+    box-sizing: border-box;
+}
+
+.draggable-barcode.date-only-card .barcode-card-header {
+    justify-content: center;
+    /* Center the title if present */
+    margin-bottom: 2%;
+    border-bottom: 1.5px solid rgba(0, 0, 0, 0.06);
+    padding-bottom: 2%;
+}
+
+.draggable-barcode.date-only-card .barcode-card-title {
+    font-size: 6cqw;
+    text-align: center;
+}
+
+.date-only-value {
+    font-size: 11.5cqw;
+    /* Large, responsive to card size */
+    font-weight: 800;
+    color: var(--text-dark);
+    text-align: center;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin: auto 0;
     user-select: none;
     pointer-events: none;
+    letter-spacing: -0.02em;
+}
+
+/* Disable drag cursor and hide resize handles when grid templates are active */
+.print-sheet.template-grid-12 .draggable-barcode,
+.print-sheet.template-grid-24 .draggable-barcode,
+.print-sheet.template-grid-8 .draggable-barcode {
+    cursor: default !important;
+    border-radius: 4px !important;
+    /* snap-fitting card borders */
+}
+
+.print-sheet.template-grid-12 .barcode-resize-handle,
+.print-sheet.template-grid-24 .barcode-resize-handle,
+.print-sheet.template-grid-8 .barcode-resize-handle {
+    display: none !important;
 }
 
 .draggable-barcode:hover {
@@ -767,7 +882,8 @@ input[type="text"]:focus {
     line-height: 1.4;
 }
 
-.modal-body input {
+.modal-body input,
+.modal-body select {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     font-weight: 600;
     font-size: 0.8rem;
@@ -778,9 +894,11 @@ input[type="text"]:focus {
     border-radius: var(--radius-md);
     box-sizing: border-box;
     transition: border-color 0.15s, box-shadow 0.15s;
+    background-color: #ffffff; /* ensure white background */
 }
 
-.modal-body input:focus {
+.modal-body input:focus,
+.modal-body select:focus {
     outline: none;
     border-color: var(--primary-color);
 }
@@ -862,11 +980,13 @@ input[type="text"]:focus {
     overflow-y: auto;
     padding-right: 0;
     gap: 16px;
-    scrollbar-width: none; /* Hide scrollbar for Firefox */
+    scrollbar-width: none;
+    /* Hide scrollbar for Firefox */
 }
 
 .modal-help-body::-webkit-scrollbar {
-    display: none; /* Hide scrollbar for Chrome, Safari, Opera */
+    display: none;
+    /* Hide scrollbar for Chrome, Safari, Opera */
 }
 
 .help-section h4 {
@@ -1304,4 +1424,87 @@ input[type="text"]:focus {
     opacity: 0.5;
     cursor: not-allowed !important;
     pointer-events: none;
+}
+
+/* Checkbox and Date input styles for Page settings */
+.input-group-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox-container input[type="checkbox"] {
+    display: none;
+}
+
+.checkbox-container .custom-checkbox {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    background-color: #f9fafb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.checkbox-container input[type="checkbox"]:checked+.custom-checkbox {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.checkbox-container .custom-checkbox::after {
+    content: "";
+    width: 5px;
+    height: 9px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg) scale(0);
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.checkbox-container input[type="checkbox"]:checked+.custom-checkbox::after {
+    transform: rotate(45deg) scale(1);
+}
+
+.date-input {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    background-color: #f9fafb;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 6px 10px;
+    outline: none;
+    transition: var(--transition);
+    max-width: 135px;
+}
+
+.date-input:focus {
+    border-color: var(--primary-color);
+    background-color: #ffffff;
+}
+
+/* FLEG Button premium hover/active states */
+.btn-fleg {
+    box-sizing: border-box;
+}
+
+.btn-fleg:hover {
+    background-color: rgba(16, 185, 129, 0.459);
 }

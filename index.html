@@ -67,6 +67,71 @@
                 </button>
             </div>
 
+            <!-- Section: Page Settings -->
+            <div class="sidebar-section">
+                <h3>Paramètres de la page</h3>
+                <div class="input-group">
+                    <label for="page-grid-select">Modèle de grille (Planche A4)</label>
+                    <div class="custom-select" id="custom-grid-select">
+                        <select id="page-grid-select" class="hidden-select">
+                            <option value="free" selected>Libre (Glisser & Déposer)</option>
+                            <option value="grid-12">12 étiquettes (105x49 mm)</option>
+                            <option value="grid-24">24 étiquettes (70x37 mm)</option>
+                            <option value="grid-8">8 étiquettes (105x74 mm)</option>
+                        </select>
+                        <div class="custom-select-trigger">
+                            <span>Libre (Glisser & Déposer)</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                class="custom-select-arrow">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                        <div class="custom-select-dropdown">
+                            <div class="custom-select-option selected" data-value="free">Libre (Glisser & Déposer)</div>
+                            <div class="custom-select-option" data-value="grid-12">12 étiquettes (105x49 mm)</div>
+                            <div class="custom-select-option" data-value="grid-24">24 étiquettes (70x37 mm)</div>
+                            <div class="custom-select-option" data-value="grid-8">8 étiquettes (105x74 mm)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-group" style="margin-top: 16px;">
+                    <label for="page-date-input">Date des étiquettes</label>
+                    <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
+                        <input type="date" id="page-date-input" class="date-input"
+                            style="flex: 1; min-width: 0; height: 40px; box-sizing: border-box;">
+                        <button type="button" id="btn-generate-dates" class="btn btn-fleg"
+                            style="flex: 1.3; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; background: rgb(16 185 129 / 25%); color: #059669; border: 2px solid #10b981; height: 40px; border-radius: 8px; cursor: pointer; transition: all 0.2s; box-sizing: border-box; font-size: 0.75rem; padding: 0 4px; white-space: nowrap;"
+                            title="Étiquettes FLEG (105x49mm)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                style="width: 14px; height: 14px; flex-shrink: 0;">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            Étiquettes FLEG
+                        </button>
+                    </div>
+                    <div id="date-mode-status"
+                        style="margin-top: 8px; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); display: none; align-items: center; justify-content: space-between; width: 100%;">
+                        <span style="display: flex; align-items: center; gap: 4px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                style="width: 14px; height: 14px; color: var(--text-muted);">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            Page bloquée en mode FLEG
+                        </span>
+                        <button type="button" id="btn-unlock-date-mode"
+                            style="background: none; border: none; color: #ef4444; font-weight: 700; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; cursor: pointer; text-decoration: underline; font-size: 0.8rem; padding: 0;">
+                            Déverrouiller
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Operations: Print / Empty -->
             <div class="sidebar-footer">
                 <button type="button" id="btn-print-sheet" class="btn btn-primary btn-large">
@@ -101,10 +166,6 @@
         <main class="workspace-area">
             <div class="sheet-viewport">
                 <div id="print-sheet" class="print-sheet">
-                    <!-- Centered placeholder instruction when sheet is empty -->
-                    <div id="sheet-placeholder" class="sheet-placeholder">
-                        Feuille d'impression format A4
-                    </div>
                 </div>
             </div>
             <div class="workspace-tabs-container">
@@ -228,6 +289,7 @@
         </div>
     </div>
 
+
     <div id="print-output-container"></div>
 
     <!-- Floating Help Button -->
@@ -249,7 +311,18 @@
             <div class="modal-body modal-help-body">
                 <div class="help-section">
                     <h4>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="help-icon"><rect x="2" y="4" width="20" height="12" rx="2" ry="2"></rect><line x1="6" y1="8" x2="6.01" y2="8"></line><line x1="10" y1="8" x2="10.01" y2="8"></line><line x1="14" y1="8" x2="14.01" y2="8"></line><line x1="18" y1="8" x2="18.01" y2="8"></line><line x1="6" y1="12" x2="6.01" y2="12"></line><line x1="18" y1="12" x2="18.01" y2="12"></line><line x1="10" y1="12" x2="14" y2="12"></line><path d="M6 20h12"></path></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" class="help-icon">
+                            <rect x="2" y="4" width="20" height="12" rx="2" ry="2"></rect>
+                            <line x1="6" y1="8" x2="6.01" y2="8"></line>
+                            <line x1="10" y1="8" x2="10.01" y2="8"></line>
+                            <line x1="14" y1="8" x2="14.01" y2="8"></line>
+                            <line x1="18" y1="8" x2="18.01" y2="8"></line>
+                            <line x1="6" y1="12" x2="6.01" y2="12"></line>
+                            <line x1="18" y1="12" x2="18.01" y2="12"></line>
+                            <line x1="10" y1="12" x2="14" y2="12"></line>
+                            <path d="M6 20h12"></path>
+                        </svg>
                         Création & Raccourcis Clavier
                     </h4>
                     <ul>
@@ -264,11 +337,16 @@
                 </div>
                 <div class="help-section">
                     <h4>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="help-icon"><rect x="5" y="2" width="14" height="20" rx="7"></rect><path d="M12 2v8"></path></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" class="help-icon">
+                            <rect x="5" y="2" width="14" height="20" rx="7"></rect>
+                            <path d="M12 2v8"></path>
+                        </svg>
                         Clic-Droit & Modificateurs
                     </h4>
                     <ul>
-                        <li><strong>Titre (Raccourcis)</strong> : Modifiez le nom avec des raccourcis rapides (FRAIS, POISSON, etc.) qui valident instantanément au clic.</li>
+                        <li><strong>Titre (Raccourcis)</strong> : Modifiez le nom avec des raccourcis rapides (FRAIS,
+                            POISSON, etc.) qui valident instantanément au clic.</li>
                         <li><strong>Modifier le code</strong> : Double-cliquez directement sur le code ou utilisez
                             l'option.</li>
                         <li><strong>Masquer/Afficher la valeur</strong> : Affiche ou masque la valeur textuelle sous les
@@ -281,17 +359,31 @@
                 </div>
                 <div class="help-section">
                     <h4>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="help-icon"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" class="help-icon">
+                            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                            <rect x="6" y="14" width="12" height="8"></rect>
+                        </svg>
                         Impression intelligente
                     </h4>
                     <ul>
-                        <li><strong>Bouton d'impression</strong> : Imprime directement si 1 seule page, ou ouvre les paramètres si multipage (avec la page active sélectionnée par défaut).</li>
-                        <li><strong>Clic-Droit (Espace vide)</strong> : Permet de créer un code, imprimer, ou vider la feuille (désactivé si la page est vide).</li>
+                        <li><strong>Bouton d'impression</strong> : Imprime directement si 1 seule page, ou ouvre les
+                            paramètres si multipage (avec la page active sélectionnée par défaut).</li>
+                        <li><strong>Clic-Droit (Espace vide)</strong> : Permet de créer un code, imprimer, ou vider la
+                            feuille (désactivé si la page est vide).</li>
                     </ul>
                 </div>
                 <div class="help-section">
                     <h4>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="help-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" class="help-icon">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
                         Disposition sur la Feuille A4
                     </h4>
                     <ul>

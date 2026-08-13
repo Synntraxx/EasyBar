@@ -5,31 +5,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Générateur de Codes-Barres Professionnel</title>
-    <!-- Fonts -->
+    <!-- Polices de caractères -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
-    <!-- CSS stylesheet -->
+    <!-- Feuille de style CSS -->
     <link rel="stylesheet" href="style.css">
-    <!-- Favicon -->
+    <!-- Favicone -->
     <link rel="icon" type="image/png" href="icon.png">
-    <!-- JsBarcode library dependency via CDN -->
+    <!-- Dépendance de la bibliothèque JsBarcode via CDN -->
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
 
 <body>
     <div class="app-shell">
-        <!-- Sidebar layout on the left -->
+        <!-- Barre latérale à gauche -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <!-- App logo icon -->
+                <!-- Icône du logo de l'application -->
                 <img class="header-logo" src="icon.png" alt="EasyBar Logo">
                 <h2>Easy<span class="red-accent">Bar</span></h2>
             </div>
 
-            <!-- Form: Create Barcode -->
+            <!-- Formulaire : Ajouter un code-barres -->
             <div class="sidebar-section">
                 <h3>Ajouter un code-barres</h3>
                 <div class="input-group">
@@ -67,15 +67,20 @@
                 </button>
             </div>
 
-            <!-- Section: Page Settings -->
+            <!-- Section : Paramètres de la page -->
             <div class="sidebar-section">
                 <h3>Paramètres de la page</h3>
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <label for="page-name-input">Nom de la page</label>
+                    <input type="text" id="page-name-input" placeholder="Nom de la page" maxlength="20" style="width: 100%; box-sizing: border-box;">
+                </div>
                 <div class="input-group">
                     <label for="page-grid-select">Modèle de grille (Planche A4)</label>
                     <div class="custom-select" id="custom-grid-select">
                         <select id="page-grid-select" class="hidden-select">
                             <option value="free" selected>Libre (Glisser & Déposer)</option>
                             <option value="grid-12">12 étiquettes (105x49 mm)</option>
+                            <option value="grid-14">14 étiquettes (7x2 FLEG)</option>
                             <option value="grid-24">24 étiquettes (70x37 mm)</option>
                             <option value="grid-8">8 étiquettes (105x74 mm)</option>
                         </select>
@@ -89,6 +94,7 @@
                         <div class="custom-select-dropdown">
                             <div class="custom-select-option selected" data-value="free">Libre (Glisser & Déposer)</div>
                             <div class="custom-select-option" data-value="grid-12">12 étiquettes (105x49 mm)</div>
+                            <div class="custom-select-option" data-value="grid-14">14 étiquettes (7x2 FLEG)</div>
                             <div class="custom-select-option" data-value="grid-24">24 étiquettes (70x37 mm)</div>
                             <div class="custom-select-option" data-value="grid-8">8 étiquettes (105x74 mm)</div>
                         </div>
@@ -97,11 +103,17 @@
                 <div class="input-group" style="margin-top: 16px;">
                     <label for="page-date-input">Date des étiquettes</label>
                     <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
-                        <input type="date" id="page-date-input" class="date-input"
-                            style="flex: 1; min-width: 0; height: 40px; box-sizing: border-box;">
+                        <div class="custom-datepicker" id="custom-datepicker"
+                            style="flex: 1; min-width: 0; position: relative;">
+                            <input type="text" id="page-date-input" class="date-input" readonly
+                                style="cursor: pointer; caret-color: transparent; text-align: center; height: 40px; box-sizing: border-box; width: 100%; max-width: 100%;"
+                                placeholder="Choisir date">
+                            <!-- Menu déroulant du calendrier personnalisé -->
+                            <div class="datepicker-calendar hidden" id="datepicker-calendar"></div>
+                        </div>
                         <button type="button" id="btn-generate-dates" class="btn btn-fleg"
                             style="flex: 1.3; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; background: rgb(16 185 129 / 25%); color: #059669; border: 2px solid #10b981; height: 40px; border-radius: 8px; cursor: pointer; transition: all 0.2s; box-sizing: border-box; font-size: 0.75rem; padding: 0 4px; white-space: nowrap;"
-                            title="Étiquettes FLEG (105x49mm)">
+                            title="Étiquettes FLEG (7x2)">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                                 style="width: 14px; height: 14px; flex-shrink: 0;">
                                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -115,24 +127,17 @@
                     <div id="date-mode-status"
                         style="margin-top: 8px; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); display: none; align-items: center; justify-content: space-between; width: 100%;">
                         <span style="display: flex; align-items: center; gap: 4px;">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                style="width: 14px; height: 14px; color: var(--text-muted);">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                <line x1="16" y1="2" x2="16" y2="6"></line>
-                                <line x1="8" y1="2" x2="8" y2="6"></line>
-                                <line x1="3" y1="10" x2="21" y2="10"></line>
-                            </svg>
-                            Page bloquée en mode FLEG
+                            🥬 Page bloquée
                         </span>
                         <button type="button" id="btn-unlock-date-mode"
-                            style="background: none; border: none; color: #ef4444; font-weight: 700; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; cursor: pointer; text-decoration: underline; font-size: 0.8rem; padding: 0;">
+                            style="background: var(--primary-color); border: none; color: #ffffff; border-radius: 5px; font-weight: 700; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; cursor: pointer; font-size: 0.8rem; padding: 5px;">
                             Déverrouiller
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Operations: Print / Empty -->
+            <!-- Opérations : Imprimer / Vider -->
             <div class="sidebar-footer">
                 <button type="button" id="btn-print-sheet" class="btn btn-primary btn-large">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -149,20 +154,10 @@
                     </svg>
                     Vider la page
                 </button>
-                <div id="sheets-saved-counter" class="sheets-saved-counter">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 9.8A7 7 0 0 1 11 20z"></path>
-                        <path d="M9 22v-4h4"></path>
-                    </svg>
-                    <div class="counter-text-wrapper">
-                        <span id="sheets-saved-text">0 feuille sauvée</span>
-                        <span id="sheets-saved-eco-details" class="eco-details">0 arbre sauvé • 0L d'eau</span>
-                    </div>
-                </div>
             </div>
         </aside>
 
-        <!-- Main workspace: A4 sheet display -->
+        <!-- Espace de travail principal : feuille A4 -->
         <main class="workspace-area">
             <div class="sheet-viewport">
                 <div id="print-sheet" class="print-sheet">
@@ -170,13 +165,13 @@
             </div>
             <div class="workspace-tabs-container">
                 <div id="workspace-tabs" class="workspace-tabs">
-                    <!-- Dynamic tabs will be inserted here -->
+                    <!-- Les onglets dynamiques seront insérés ici -->
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Custom Right-Click Context Menu container -->
+    <!-- Conteneur du menu contextuel personnalisé (clic droit) -->
     <div id="custom-context-menu" class="custom-context-menu hidden">
         <ul>
             <li id="menu-opt-edit">
@@ -216,7 +211,7 @@
         </ul>
     </div>
 
-    <!-- Custom Modal Popup for Title/Prompt -->
+    <!-- Fenêtre modale personnalisée pour le titre -->
     <div id="title-modal" class="modal-backdrop hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -241,7 +236,7 @@
         </div>
     </div>
 
-    <!-- Print Selection Modal -->
+    <!-- Fenêtre modale de sélection de l'impression -->
     <div id="print-modal" class="modal-backdrop hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -252,7 +247,7 @@
                 <p style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-muted);">Sélectionnez les pages que
                     vous souhaitez imprimer :</p>
                 <div id="print-pages-list" class="print-pages-list">
-                    <!-- Dynamic checkboxes will go here -->
+                    <!-- Les cases à cocher dynamiques iront ici -->
                 </div>
                 <div class="print-pages-actions" style="margin-top: 12px; display: flex; gap: 8px; font-size: 0.8rem;">
                     <button type="button" class="btn-link" id="btn-select-all-pages"
@@ -271,7 +266,7 @@
         </div>
     </div>
 
-    <!-- Custom Confirmation Modal -->
+    <!-- Fenêtre modale de confirmation personnalisée -->
     <div id="confirm-modal" class="modal-backdrop hidden">
         <div class="modal-content modal-confirm-content">
             <div class="modal-header">
@@ -288,12 +283,29 @@
             </div>
         </div>
     </div>
+    <!-- Fenêtre modale pour renommer la page -->
+    <div id="rename-page-modal" class="modal-backdrop hidden">
+        <div class="modal-content" style="max-width: 400px; width: 95%;">
+            <div class="modal-header">
+                <h2>Renommer la page</h2>
+                <button type="button" class="btn-close-modal" id="btn-close-rename-page-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Saisissez le nouveau nom de la page :</p>
+                <input type="text" id="rename-page-input" placeholder="Nom de la page" maxlength="20" style="width: 100%; box-sizing: border-box; margin-top: 8px;">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btn-cancel-rename-page-modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="btn-save-rename-page-modal">Valider</button>
+            </div>
+        </div>
+    </div>
 
 
     <div id="print-output-container"></div>
 
-    <!-- Floating Help Button -->
-    <button id="btn-help" class="btn-floating-help" title="Aide & Raccourcis">
+    <!-- Bouton d'aide flottant -->
+    <button id="btn-help" class="btn-floating-help">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <circle cx="12" cy="12" r="10"></circle>
             <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
@@ -301,14 +313,27 @@
         </svg>
     </button>
 
-    <!-- Help Modal Dialog -->
-    <div id="help-modal" class="modal-backdrop hidden">
-        <div class="modal-content modal-help-content">
-            <div class="modal-header">
-                <h2>Raccourcis & Commandes</h2>
-                <button type="button" class="btn-close-modal" id="btn-close-help-modal">&times;</button>
+    <!-- Help Drawer Dialog -->
+    <div id="help-modal" class="help-backdrop hidden">
+        <div class="help-drawer">
+            <div class="help-drawer-header">
+                <h2>Aide & Raccourcis</h2>
+                <button type="button" class="btn-close-drawer" id="btn-close-help-modal">&times;</button>
             </div>
-            <div class="modal-body modal-help-body">
+            <div class="help-drawer-body">
+                <!-- FLEG / Latest additions section -->
+                <div class="help-section" style="border: 2px solid #10b981; background: rgba(16, 185, 129, 0.05); padding: 12px; border-radius: var(--radius-md);">
+                    <h4 style="color: #059669; border-bottom: 1.5px solid rgba(16, 185, 129, 0.2); margin-top: 0;">
+                        🥬 Gabarit & Mode FLEG (7x2)
+                    </h4>
+                    <ul style="padding-left: 16px; margin: 0; display: flex; flex-direction: column; gap: 8px;">
+                        <li><strong>Grille 7x2 (14 étiquettes)</strong> : Le gabarit est figé à 14 étiquettes par page. Le redimensionnement et le déplacement manuel des étiquettes sont verrouillés pour garantir une impression conforme.</li>
+                        <li><strong>Nouveau Calendrier</strong> : Un calendrier Auchan sur-mesure vous permet de sélectionner facilement et précisément la date des étiquettes.</li>
+                        <li><strong>Indicateur Onglet</strong> : L'émoji 🥬 s'affiche sur les onglets des pages configurées en mode FLEG.</li>
+                        <li><strong>Déverrouillage Contextuel</strong> : En faisant un clic droit dans le vide d'une feuille bloquée, vous pouvez rapidement déverrouiller le mode FLEG.</li>
+                    </ul>
+                </div>
+
                 <div class="help-section">
                     <h4>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -393,13 +418,13 @@
                     </ul>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="btn-close-help-ok">Fermer</button>
+            <div class="help-drawer-footer">
+                <button type="button" class="btn btn-primary" id="btn-close-help-ok" style="width: 100%;">Fermer</button>
             </div>
         </div>
     </div>
 
-    <!-- JS engine script -->
+    <!-- Script du moteur JS -->
     <script src="script.js"></script>
 </body>
 

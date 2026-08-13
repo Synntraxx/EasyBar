@@ -1,33 +1,33 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Array to hold active barcode objects
+    // Tableau contenant les objets de codes-barres actifs
     let barcodes = [];
     let selectedBarcodeId = null;
     let barcodeIdCounter = 0;
 
-    // Multipage state
+    // État multipage
     let totalPages = 1;
     let activePage = 1;
     let pageSettings = {}; // keyed by pageNumber: { gridType: 'free', showDate: false, dateValue: '' }
     const localDate = new Date();
     const today = `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, '0')}-${String(localDate.getDate()).padStart(2, '0')}`;
 
-    // Target DOM Nodes
+    // Nœuds DOM cibles
     const printSheet = document.getElementById('print-sheet');
     const sheetPlaceholder = document.getElementById('sheet-placeholder');
 
-    // Sidebar forms
+    // Formulaires de la barre latérale
     const valueInput = document.getElementById('barcode-value-input');
     const formatSelect = document.getElementById('barcode-format-select');
     const customFormatSelect = document.getElementById('custom-format-select');
     const btnAddBarcode = document.getElementById('btn-add-barcode');
-    // General action buttons
+    // Boutons d'action généraux
     const btnPrintSheet = document.getElementById('btn-print-sheet');
     const btnClearSheet = document.getElementById('btn-clear-sheet');
 
-    // Custom context menu container
+    // Conteneur du menu contextuel personnalisé
     const contextMenu = document.getElementById('custom-context-menu');
 
-    // Title modal DOM references
+    // Références DOM de la boîte modale du titre
     const titleModal = document.getElementById('title-modal');
     const titleModalInput = document.getElementById('title-modal-input');
     const btnCloseTitleModal = document.getElementById('btn-close-title-modal');
@@ -35,31 +35,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnSaveTitleModal = document.getElementById('btn-save-title-modal');
     let currentEditingBarcodeForTitle = null;
 
-    // Help modal DOM references
+    // Références DOM du tiroir d'aide
     const helpModal = document.getElementById('help-modal');
     const btnHelp = document.getElementById('btn-help');
     const btnCloseHelpModal = document.getElementById('btn-close-help-modal');
     const btnCloseHelpOk = document.getElementById('btn-close-help-ok');
 
-    // Sheets saved counter reference
-    const sheetsSavedText = document.getElementById('sheets-saved-text');
-    const sheetsSavedEcoDetails = document.getElementById('sheets-saved-eco-details');
-
-    // Page settings DOM nodes
+    // Nœuds DOM pour les paramètres de la page
     const dateInput = document.getElementById('page-date-input');
     const btnGenerateDates = document.getElementById('btn-generate-dates');
     const btnUnlockDateMode = document.getElementById('btn-unlock-date-mode');
 
+    setupCustomDatePicker();
+
     let activeDragElement = null;
     let startX = 0, startY = 0;
     let initialLeft = 0, initialTop = 0;
-    let contextMenuTargetId = null; // Stored barcode ID for context actions
-    let copiedBarcodeData = null; // Stored barcode configuration for copy-pasting
+    let contextMenuTargetId = null; // ID du code-barres stocké pour les actions contextuelles
+    let contextMenuTargetPage = null; // Numéro de page stocké pour les actions contextuelles
+    let copiedBarcodeData = null; // Configuration de code-barres stockée pour le copier-coller
     let currentTooltip = null;
     let tooltipTimeout = null;
 
     // ==========================================================================
-    // CUSTOM SELECT DROPDOWN LOGIC
+    // LOGIQUE DU MENU DÉROULANT DE SÉLECTION PERSONNALISÉ
     // ==========================================================================
     const customSelect = customFormatSelect;
     if (customSelect) {
@@ -76,15 +75,15 @@ document.addEventListener('DOMContentLoaded', () => {
         options.forEach(opt => {
             opt.addEventListener('click', (e) => {
                 e.stopPropagation();
-                
-                // Update selected classes
+
+                // Mettre à jour les classes sélectionnées
                 options.forEach(o => o.classList.remove('selected'));
                 opt.classList.add('selected');
 
-                // Update text display
+                // Mettre à jour l'affichage du texte
                 triggerText.textContent = opt.textContent;
 
-                // Sync the actual hidden select and dispatch change event
+                // Synchroniser le sélecteur réel masqué et déclencher l'événement change
                 if (realSelect) {
                     realSelect.value = opt.dataset.value;
                     realSelect.dispatchEvent(new Event('change'));
@@ -94,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Sync custom UI if real select value is modified programmatically
+        // Synchroniser l'interface personnalisée si le sélecteur réel est modifié programmatiquement
         if (realSelect) {
             realSelect.addEventListener('change', () => {
                 const targetOpt = Array.from(options).find(opt => opt.dataset.value === realSelect.value);
@@ -106,14 +105,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Close dropdown when clicking outside
+        // Fermer le menu déroulant en cliquant à l'extérieur
         document.addEventListener('click', () => {
             customSelect.classList.remove('active');
         });
     }
 
     // ==========================================================================
-    // ACTION TRIGGERS & FORM HANDLERS
+    // DÉCLENCHEURS D'ACTIONS ET GESTIONNAIRES DE FORMULAIRES
     // ==========================================================================
 
     btnAddBarcode.addEventListener('click', () => {
@@ -132,6 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pageSet.gridType === 'grid-12') limit = 12;
             else if (pageSet.gridType === 'grid-24') limit = 24;
             else if (pageSet.gridType === 'grid-8') limit = 8;
+            else if (pageSet.gridType === 'grid-14') limit = 14;
         }
         const currentCount = barcodes.filter(b => b.page === activePage).length;
         if (currentCount >= limit) {
@@ -140,11 +140,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         addNewBarcode(val, format);
-        valueInput.value = ''; // Reset input after insertion
+        valueInput.value = ''; // Réinitialiser le champ de saisie après l'insertion
     });
 
     valueInput.addEventListener('input', () => {
-        // Remove tooltip if active when user starts typing
+        // Retirer l'info-bulle si elle est active lorsque l'utilisateur commence à saisir
         if (currentTooltip) {
             currentTooltip.style.opacity = '0';
             currentTooltip.style.transform = 'translateY(-50%) translateX(8px)';
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Main barcode generation handler using percentage sizing for matching scale
+    // Gestionnaire principal de génération de codes-barres avec dimensionnement en pourcentage pour préserver l'échelle
     function addNewBarcode(value, format, cardWPct = 34, cardHPct = 11, height = 55, width = 2, displayValue = true, title = "", leftPercent = null, topPercent = null, page = null, isDateOnly = false) {
         const finalPage = page !== null ? page : activePage;
         const pageSet = getPageSettings(finalPage);
@@ -180,6 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pageSet.gridType === 'grid-12') limit = 12;
             else if (pageSet.gridType === 'grid-24') limit = 24;
             else if (pageSet.gridType === 'grid-8') limit = 8;
+            else if (pageSet.gridType === 'grid-14') limit = 14;
         }
         const currentCount = barcodes.filter(b => b.page === finalPage).length;
         if (currentCount >= limit) {
@@ -189,9 +190,9 @@ document.addEventListener('DOMContentLoaded', () => {
         barcodeIdCounter++;
         const id = `bc_${Date.now()}_${barcodeIdCounter}`;
 
-        // Cascade positions, centering the default card horizontally on the sheet
+        // Positionnement en cascade, centrage horizontal de la carte par défaut
         const count = barcodes.filter(b => b.page === finalPage).length;
-        const finalLeft = leftPercent !== null ? leftPercent : (100 - cardWPct) / 2; // Perfectly centered by default
+        const finalLeft = leftPercent !== null ? leftPercent : (100 - cardWPct) / 2; // Parfaitement centré par défaut
         const finalTop = topPercent !== null ? topPercent : (15 + (count * 12) % 50);
 
         let finalTitle = title;
@@ -237,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================================================
-    // DOM BARCODE CARD INITIALIZATION & RENDER
+    // INITIALISATION ET RENDU DOM DES CARTES DE CODES-BARRES
     // ==========================================================================
     function getPageSettings(pageNum) {
         if (!pageSettings[pageNum]) {
@@ -253,7 +254,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const configs = {
             'grid-12': { cols: 2, rows: 6, wPct: 50, hPct: 16.6666 },
             'grid-24': { cols: 3, rows: 8, wPct: 33.3333, hPct: 12.5 },
-            'grid-8': { cols: 2, rows: 4, wPct: 50, hPct: 25 }
+            'grid-8': { cols: 2, rows: 4, wPct: 50, hPct: 25 },
+            'grid-14': { cols: 2, rows: 7, wPct: 50, hPct: 14.2857 }
         };
         return configs[gridType] || null;
     }
@@ -268,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================================================
-    // DOM BARCODE CARD INITIALIZATION & RENDER
+    // INITIALISATION ET RENDU DOM DES CARTES DE CODES-BARRES
     // ==========================================================================
     function createBarcodeDOM(bc) {
         const card = document.createElement('div');
@@ -277,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
             card.classList.add('date-only-card');
         }
 
-        // Calculate grid layout overrides if page has grid settings
+        // Calculer les surcharges de disposition de grille si la page a des paramètres de grille
         const pageSet = getPageSettings(bc.page);
         let left = bc.leftPercent;
         let top = bc.topPercent;
@@ -287,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pageSet && pageSet.gridType !== 'free') {
             const gridConfig = getGridConfig(pageSet.gridType);
             if (gridConfig) {
-                // Find index of this barcode within its page
+                // Trouver l'index de ce code-barres dans sa page
                 const pageBarcodes = barcodes.filter(b => b.page === bc.page);
                 const idx = pageBarcodes.indexOf(bc);
                 if (idx !== -1) {
@@ -307,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         card.style.height = `${h}%`;
         card.dataset.id = bc.id;
 
-        // Custom Title & Date Header at the top of the card
+        // Titre personnalisé et en-tête de date en haut de la carte
         const headerEl = document.createElement('div');
         headerEl.className = 'barcode-card-header';
 
@@ -330,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
         headerEl.appendChild(dateEl);
 
 
-        // Hide header entirely if both title and date are hidden
+        // Masquer entièrement l'en-tête si le titre et la date sont masqués
         if (!bc.title && (bc.isDateOnly || !pageSet || !pageSet.showDate)) {
             headerEl.classList.add('hidden');
         }
@@ -342,13 +344,13 @@ document.addEventListener('DOMContentLoaded', () => {
             dateValEl.textContent = formatDate(bc.value);
             card.appendChild(dateValEl);
         } else {
-            // Vector SVG canvas
+            // Canvas vectoriel SVG
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.id = `svg_${bc.id}`;
             card.appendChild(svg);
         }
 
-        // Resize bottom-right handle
+        // Poignée de redimensionnement en bas à droite
         const resizer = document.createElement('div');
         resizer.className = 'barcode-resize-handle';
         if (pageSet && pageSet.gridType !== 'free') {
@@ -359,12 +361,12 @@ document.addEventListener('DOMContentLoaded', () => {
         printSheet.appendChild(card);
         bc.element = card;
 
-        // Draw barcodes
+        // Dessiner les codes-barres
         if (!bc.isDateOnly) {
             renderBarcodeGraphics(bc);
         }
 
-        // Card mouse click events
+        // Événements de clic de souris sur la carte
         card.addEventListener('mousedown', (e) => {
             selectBarcode(bc.id);
         });
@@ -372,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
             selectBarcode(bc.id);
         });
 
-        // Double-click triggers superimposed edit input
+        // Le double-clic déclenche l'affichage d'un champ de modification superposé
         card.addEventListener('dblclick', (e) => {
             e.stopPropagation();
             const pageSet = getPageSettings(activePage);
@@ -382,7 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
             startInlineEdit(bc);
         });
 
-        // Resizer mouse drag triggers using parent sheet relative percentages
+        // Glissement de souris pour redimensionner en utilisant des pourcentages relatifs à la feuille parente
         resizer.addEventListener('mousedown', (e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -397,7 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let newWidth = Math.max(110, startWidth + (moveEvent.clientX - startX));
                 let newHeight = Math.max(65, startHeight + (moveEvent.clientY - startY));
 
-                // Align grid snapping
+                // Aligner sur la grille (aimantation)
                 const gridSpacing = 15;
                 newWidth = Math.round(newWidth / gridSpacing) * gridSpacing;
                 newHeight = Math.round(newHeight / gridSpacing) * gridSpacing;
@@ -405,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let pctWidth = (newWidth / parentRect.width) * 100;
                 let pctHeight = (newHeight / parentRect.height) * 100;
 
-                // Ensure the card width and height do not extend beyond the sheet boundaries
+                // S'assurer que la largeur et la hauteur de la carte ne dépassent pas les limites de la feuille
                 const maxAllowedWidthPct = 100 - bc.leftPercent;
                 const maxAllowedHeightPct = 100 - bc.topPercent;
 
@@ -418,7 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 bc.cardWidthPercent = pctWidth;
                 bc.cardHeightPercent = pctHeight;
 
-                // Adjust barcode internal heights based on relative scale
+                // Ajuster les hauteurs internes des codes-barres en fonction de l'échelle relative
                 const actualPixelHeight = (pctHeight / 100) * parentRect.height;
                 bc.height = Math.max(30, Math.min(130, Math.floor(actualPixelHeight * 0.5)));
                 renderBarcodeGraphics(bc);
@@ -434,11 +436,11 @@ document.addEventListener('DOMContentLoaded', () => {
             document.addEventListener('mouseup', onMouseUp);
         });
 
-        // Init drag movement
+        // Initialiser le mouvement de glissement
         initDragAndDrop(card);
     }
 
-    // Render JsBarcode with vector aspect ratios mapping
+    // Rendre JsBarcode avec mise en correspondance des rapports d'aspect vectoriels
     function renderBarcodeGraphics(bc) {
         const svg = bc.element.querySelector('svg');
         svg.innerHTML = '';
@@ -451,12 +453,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Adjust height for grid layouts
+        // Ajuster la hauteur pour les dispositions en grille
         const pageSet = getPageSettings(bc.page);
         let drawHeight = bc.height;
         if (pageSet && pageSet.gridType !== 'free' && bc.element) {
             const cardRect = bc.element.getBoundingClientRect();
-            // Automatically set height to about 45% of the actual card height in pixels
+            // Ajuster automatiquement la hauteur à environ 45% de la hauteur réelle de la carte en pixels
             drawHeight = Math.max(25, Math.min(120, Math.floor(cardRect.height * 0.45)));
         }
 
@@ -503,7 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================================================
-    // DRAG AND DROP MOVEMENT LOGIC (PERCENTAGE POSITIONING)
+    // LOGIQUE DE MOUVEMENT GLISSER-DÉPOSER (POSITIONNEMENT EN POURCENTAGE)
     // ==========================================================================
     function initDragAndDrop(element) {
         element.addEventListener('mousedown', dragStart);
@@ -526,6 +528,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             activeDragElement = element;
+            element.classList.add('dragging');
+            document.body.classList.add('dragging-active');
             const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
             const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
 
@@ -564,9 +568,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Snap coordinates relative to current grid spacing (starting at 0 for every edge)
             const gridSpacing = 15;
-            const snapTolerance = 25; // Larger tolerance for sheet edges
+            const snapTolerance = 25; // Tolérance plus grande pour les bords de la feuille
 
-            // Apply edge-snapping tolerance to ensure perfect flush alignment at boundaries
+            // Appliquer une tolérance d'aimantation des bords pour assurer un alignement parfait aux limites
             if (newLeft < snapTolerance) {
                 newLeft = 0;
             } else if (newLeft > maxLeft - snapTolerance) {
@@ -599,6 +603,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function dragEnd() {
+            if (activeDragElement) {
+                activeDragElement.classList.remove('dragging');
+            }
+            document.body.classList.remove('dragging-active');
             activeDragElement = null;
             document.removeEventListener('mousemove', dragMove);
             document.removeEventListener('touchmove', dragMove);
@@ -696,7 +704,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             titleEl.textContent = title;
             messageEl.textContent = message;
-            
+
             const originalConfirmText = btnConfirm.textContent;
             btnConfirm.textContent = "OK";
             const originalCancelDisplay = btnCancel.style.display;
@@ -708,7 +716,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 modal.classList.add('hidden');
                 btnConfirm.textContent = originalConfirmText;
                 btnCancel.style.display = originalCancelDisplay;
-                
+
                 btnConfirm.removeEventListener('click', handleClose);
                 btnCancel.removeEventListener('click', handleClose);
                 btnClose.removeEventListener('click', handleClose);
@@ -718,6 +726,75 @@ document.addEventListener('DOMContentLoaded', () => {
             btnConfirm.addEventListener('click', handleClose);
             btnCancel.addEventListener('click', handleClose);
             btnClose.addEventListener('click', handleClose);
+        });
+    }
+
+    function showCustomPrompt(title, message, defaultValue = '') {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('rename-page-modal');
+            const titleEl = modal ? modal.querySelector('h2') : null;
+            const messageEl = modal ? modal.querySelector('p') : null;
+            const inputEl = document.getElementById('rename-page-input');
+            const btnSave = document.getElementById('btn-save-rename-page-modal');
+            const btnCancel = document.getElementById('btn-cancel-rename-page-modal');
+            const btnClose = document.getElementById('btn-close-rename-page-modal');
+
+            if (!modal || !inputEl || !btnSave || !btnCancel || !btnClose) {
+                resolve(prompt(message, defaultValue));
+                return;
+            }
+
+            if (titleEl) titleEl.textContent = title;
+            if (messageEl) messageEl.textContent = message;
+            inputEl.value = defaultValue;
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                inputEl.focus();
+                inputEl.select();
+            }, 50);
+
+            const handleSave = () => {
+                const val = inputEl.value;
+                cleanup();
+                resolve(val);
+            };
+
+            const handleCancel = () => {
+                cleanup();
+                resolve(null);
+            };
+
+            const handleKeyDown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSave();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    handleCancel();
+                }
+            };
+
+            const handleBackdropClick = (e) => {
+                if (e.target === modal) {
+                    handleCancel();
+                }
+            };
+
+            const cleanup = () => {
+                modal.classList.add('hidden');
+                btnSave.removeEventListener('click', handleSave);
+                btnCancel.removeEventListener('click', handleCancel);
+                btnClose.removeEventListener('click', handleCancel);
+                inputEl.removeEventListener('keydown', handleKeyDown);
+                modal.removeEventListener('mousedown', handleBackdropClick);
+            };
+
+            btnSave.addEventListener('click', handleSave);
+            btnCancel.addEventListener('click', handleCancel);
+            btnClose.addEventListener('click', handleCancel);
+            inputEl.addEventListener('keydown', handleKeyDown);
+            modal.addEventListener('mousedown', handleBackdropClick);
         });
     }
 
@@ -748,14 +825,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function clearAllBarcodes() {
-        // Only clear current page's barcodes
+        // Vider uniquement les codes-barres de la page active
         barcodes.forEach(bc => {
             if (bc.page === activePage && bc.element) {
                 bc.element.remove();
             }
         });
         barcodes = barcodes.filter(bc => bc.page !== activePage);
-        
+
         const pageSet = getPageSettings(activePage);
         if (pageSet) {
             pageSet.isDateMode = false;
@@ -810,25 +887,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnPrintSheet.addEventListener('click', handlePrintButtonClick);
 
-    function updateSheetsCounter() {
-        if (!sheetsSavedText) return;
-        const count = barcodes.length;
-        const savedCount = Math.max(0, count - totalPages);
-
-        if (savedCount === 0 || savedCount === 1) {
-            sheetsSavedText.textContent = `${savedCount} feuille sauvée`;
-        } else {
-            sheetsSavedText.textContent = `${savedCount} feuilles sauvées`;
-        }
-
-        if (sheetsSavedEcoDetails) {
-            const trees = (savedCount * 0.003).toFixed(3).replace('.', ',');
-            const water = savedCount * 10;
-            const treeLabel = (savedCount * 0.003) >= 2 ? "arbres sauvés" : "arbre sauvé";
-            sheetsSavedEcoDetails.textContent = `${trees} ${treeLabel} • ${water}L d'eau`;
-        }
-    }
-
     function saveState() {
         const state = {
             totalPages,
@@ -861,7 +919,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 activePage = parsed.activePage || 1;
                 pageSettings = parsed.pageSettings || {};
 
-                // Ensure every page has default settings if missing
+                // S'assurer que chaque page a ses paramètres par défaut s'ils manquent
                 for (let i = 1; i <= totalPages; i++) {
                     if (!pageSettings[i]) {
                         pageSettings[i] = { gridType: 'free', showDate: false, dateValue: '', isDateMode: false };
@@ -895,7 +953,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Migrate from v2
+        // Migrer depuis la v2
         saved = localStorage.getItem('easybar_state_v2');
         if (saved) {
             try {
@@ -930,7 +988,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Migrate from legacy format
+        // Migrer depuis le format hérité
         saved = localStorage.getItem('easybar_state');
         if (saved) {
             try {
@@ -977,12 +1035,11 @@ document.addEventListener('DOMContentLoaded', () => {
             btnClearSheet.disabled = (pageBarcodes.length === 0);
         }
 
-        updateSheetsCounter();
         saveState();
     }
 
     // ==========================================================================
-    // INLINE EDITING INTERACTION (DOUBLE-CLICK / MODIFIER TEXTE)
+    // INTERACTION D'ÉDITION EN LIGNE (DOUBLE-CLIC / MODIFICATION DU TEXTE)
     // ==========================================================================
     function startInlineEdit(bc) {
         const card = bc.element;
@@ -1006,14 +1063,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (finalVal) {
                 bc.value = bc.format === 'CODE39' ? finalVal.toUpperCase() : finalVal;
 
-                // Automatic title assignment based on code suffix
+                // Attribution automatique du titre en fonction du suffixe du code
                 if (bc.value.endsWith('81035')) {
                     bc.title = 'FRAIS';
                 } else if (bc.value.endsWith('81025')) {
                     bc.title = 'SURG';
                 }
 
-                // Update title element on the DOM
+                // Mettre à jour l'élément de titre dans le DOM
                 const titleEl = card.querySelector('.barcode-card-title');
                 const headerEl = card.querySelector('.barcode-card-header');
                 if (titleEl && headerEl) {
@@ -1054,7 +1111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================================================
-    // CUSTOM CONSTANT RIGHT-CLICK CONTEXT MENU
+    // MENU CONTEXTUEL PERSONNALISÉ AU CLIC DROIT CONSTANT
     // ==========================================================================
     document.addEventListener('contextmenu', (e) => {
         if (e.target.closest('input') || e.target.closest('select')) {
@@ -1075,7 +1132,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const bc = barcodes.find(b => b.id === contextMenuTargetId);
             const pageSet = getPageSettings(activePage);
-            
+
             if (bc && bc.isDateOnly && pageSet && pageSet.gridType !== 'free') {
                 contextMenu.innerHTML = `
                     <ul>
@@ -1180,12 +1237,25 @@ document.addEventListener('DOMContentLoaded', () => {
             contextMenuTargetId = null;
             const pageBarcodesCount = barcodes.filter(bc => bc.page === activePage).length;
             const isPageEmpty = (pageBarcodesCount === 0);
+            const pageSet = getPageSettings(activePage);
+            const isDateMode = pageSet && pageSet.isDateMode;
+
             contextMenu.innerHTML = `
                 <ul>
-                    <li onclick="window.triggerFocusInput()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        Nouveau code-barres
-                    </li>
+                    ${isDateMode ? `
+                        <li onclick="window.triggerUnlockDateMode()" class="menu-danger">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                            </svg>
+                            Déverrouiller 🥬
+                        </li>
+                    ` : `
+                        <li onclick="window.triggerFocusInput()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            Nouveau code-barres
+                        </li>
+                    `}
                     <li onclick="window.triggerPrint()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                         Imprimer la page
@@ -1206,7 +1276,7 @@ document.addEventListener('DOMContentLoaded', () => {
             contextMenu.style.top = `${window.innerHeight - menuRect.height - 8}px`;
         }
 
-        // Toggle submenu direction depending on viewport vertical half
+        // Basculer la direction du sous-menu en fonction de la moitié verticale de la fenêtre
         if (e.clientY > window.innerHeight / 2) {
             contextMenu.classList.add('submenu-up');
         } else {
@@ -1217,7 +1287,32 @@ document.addEventListener('DOMContentLoaded', () => {
     function hideContextMenu() {
         contextMenu.classList.add('hidden');
         contextMenuTargetId = null;
+        contextMenuTargetPage = null;
     }
+
+    window.triggerContextMenuRenamePage = async () => {
+        if (contextMenuTargetPage !== null) {
+            const targetPage = contextMenuTargetPage;
+            hideContextMenu();
+            const pageSet = getPageSettings(targetPage);
+            const currentName = (pageSet && pageSet.name) ? pageSet.name : `Page ${targetPage}`;
+            const newName = await showCustomPrompt(`Renommer la page`, `Saisissez le nouveau nom de la page :`, currentName);
+            if (newName !== null) {
+                const trimmed = newName.trim();
+                pageSet.name = trimmed || `Page ${targetPage}`;
+                saveState();
+                renderTabs();
+            }
+        }
+    };
+
+    window.triggerContextMenuDeletePage = () => {
+        if (contextMenuTargetPage !== null) {
+            const targetPage = contextMenuTargetPage;
+            hideContextMenu();
+            deletePage(targetPage);
+        }
+    };
 
     document.addEventListener('mousedown', (e) => {
         if (!contextMenu.contains(e.target)) {
@@ -1234,7 +1329,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ==========================================================================
-    // TITLE CUSTOM MODAL INTERACTION
+    // INTERACTION DE LA MODALE PERSONNALISÉE DU TITRE
     // ==========================================================================
     function openTitleModal(bc) {
         currentEditingBarcodeForTitle = bc;
@@ -1276,7 +1371,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveState();
     }
 
-    // Modal Action Listeners
+    // Écouteurs d'actions des fenêtres modales
     if (btnCloseTitleModal) btnCloseTitleModal.addEventListener('click', closeTitleModal);
     if (btnCancelTitleModal) btnCancelTitleModal.addEventListener('click', closeTitleModal);
     if (btnSaveTitleModal) btnSaveTitleModal.addEventListener('click', saveTitleModalValue);
@@ -1312,7 +1407,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Help Modal Logic & Listeners
+    // Logique et écouteurs du tiroir d'aide
+    let helpBtnTooltip = null;
+    let helpBtnTooltipTimeout = null;
+
+    function showHelpBtnTooltip(btn) {
+        if (helpBtnTooltipTimeout) {
+            clearTimeout(helpBtnTooltipTimeout);
+        }
+
+        helpBtnTooltipTimeout = setTimeout(() => {
+            if (helpBtnTooltip) {
+                helpBtnTooltip.remove();
+            }
+
+            const tooltip = document.createElement('div');
+            tooltip.className = 'input-tooltip tooltip-left';
+            tooltip.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 14px; height: 14px; margin-right: 4px;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                Aide & Raccourcis
+            `;
+
+            document.body.appendChild(tooltip);
+            helpBtnTooltip = tooltip;
+
+            const rect = btn.getBoundingClientRect();
+            tooltip.style.left = `${rect.left + window.scrollX - 12}px`;
+            tooltip.style.top = `${rect.top + rect.height / 2 + window.scrollY}px`;
+        }, 300);
+    }
+
+    function hideHelpBtnTooltip() {
+        if (helpBtnTooltipTimeout) {
+            clearTimeout(helpBtnTooltipTimeout);
+            helpBtnTooltipTimeout = null;
+        }
+        if (helpBtnTooltip) {
+            helpBtnTooltip.remove();
+            helpBtnTooltip = null;
+        }
+    }
+
     function openHelpModal() {
         if (helpModal) helpModal.classList.remove('hidden');
     }
@@ -1321,7 +1460,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (helpModal) helpModal.classList.add('hidden');
     }
 
-    if (btnHelp) btnHelp.addEventListener('click', openHelpModal);
+    if (btnHelp) {
+        btnHelp.addEventListener('mouseenter', () => showHelpBtnTooltip(btnHelp));
+        btnHelp.addEventListener('mouseleave', hideHelpBtnTooltip);
+        btnHelp.addEventListener('click', () => {
+            hideHelpBtnTooltip();
+            openHelpModal();
+        });
+    }
     if (btnCloseHelpModal) btnCloseHelpModal.addEventListener('click', closeHelpModal);
     if (btnCloseHelpOk) btnCloseHelpOk.addEventListener('click', closeHelpModal);
     if (helpModal) {
@@ -1480,11 +1626,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    window.triggerUnlockDateMode = () => {
+        hideContextMenu();
+        if (btnUnlockDateMode) {
+            btnUnlockDateMode.click();
+        }
+    };
+
     // ==========================================================================
-    // GLOBAL COPIER / COLLER (CLIPBOARD PASTE)
+    // COPIER / COLLER GLOBAL (COLLAGE DEPUIS LE PRESSE-PAPIERS)
     // ==========================================================================
     document.addEventListener('paste', (e) => {
-        // If focused on an input or select element, let the browser handle it normally
+        // Si l'attention est sur un champ de saisie ou de sélection, laisser le navigateur gérer normalement
         if (e.target.closest('input') || e.target.closest('textarea') || e.target.closest('select')) {
             return;
         }
@@ -1502,6 +1655,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pageSet.gridType === 'grid-12') limit = 12;
             else if (pageSet.gridType === 'grid-24') limit = 24;
             else if (pageSet.gridType === 'grid-8') limit = 8;
+            else if (pageSet.gridType === 'grid-14') limit = 14;
         }
         const currentCount = barcodes.filter(b => b.page === activePage).length;
         if (currentCount >= limit) {
@@ -1512,7 +1666,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Retrieve plain text content from the clipboard
         const pastedText = (e.clipboardData || window.clipboardData).getData('text').trim();
         if (pastedText) {
-            // If we have a local copied barcode and its value matches the pasted clipboard text, duplicate it exactly
+            // Si un code-barres est copié localement et sa valeur correspond au texte collé, le dupliquer à l'identique
             if (copiedBarcodeData && pastedText === copiedBarcodeData.value) {
                 let offsetLeft = copiedBarcodeData.leftPercent + 4;
                 let offsetTop = copiedBarcodeData.topPercent + 4;
@@ -1532,11 +1686,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     offsetTop
                 );
 
-                // Update stored coordinates for successive pasting offsets
+                // Mettre à jour les coordonnées stockées pour les décalages successifs lors du collage
                 copiedBarcodeData.leftPercent = offsetLeft;
                 copiedBarcodeData.topPercent = offsetTop;
             } else {
-                // Heuristic format detector for general text paste
+                // Détecteur heuristique de format pour le collage de texte général
                 let detectedFormat = 'CODE128';
                 if (/^\d{13}$/.test(pastedText)) {
                     detectedFormat = 'EAN13';
@@ -1547,7 +1701,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ==========================================================================
-    // KEYBOARD SHORTCUTS & SECURE BROWSER ZOOM LOCKING
+    // RACCOURCIS CLAVIER ET VERROUILLAGE SÉCURISÉ DU ZOOM DU NAVIGATEUR
     // ==========================================================================
     document.addEventListener('wheel', (e) => {
         if (e.ctrlKey) {
@@ -1556,18 +1710,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { passive: false });
 
     document.addEventListener('keydown', (e) => {
-        // Ignore if user is currently inside an input or editable field
+        // Ignorer si l'utilisateur est actuellement dans un champ de saisie ou modifiable
         if (e.target.closest('input') || e.target.closest('textarea') || e.target.closest('select')) {
             return;
         }
 
-        // Ctrl key combinations
+        // Combinaisons de touches avec Ctrl
         if (e.ctrlKey) {
             if (e.key === '=' || e.key === '-' || e.key === '+' || e.key === '0') {
                 e.preventDefault();
             }
 
-            // Ctrl + C (Copy)
+            // Ctrl + C (Copier)
             if (e.key.toLowerCase() === 'c') {
                 if (selectedBarcodeId) {
                     const bc = barcodes.find(b => b.id === selectedBarcodeId);
@@ -1584,7 +1738,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             leftPercent: bc.leftPercent,
                             topPercent: bc.topPercent
                         };
-                        // Sync system clipboard
+                        // Synchroniser le presse-papiers du système
                         navigator.clipboard.writeText(bc.value).catch(() => { });
                         e.preventDefault();
                     }
@@ -1592,7 +1746,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Delete key (Suppr)
+        // Touche Suppr (Supprimer)
         if (e.key === 'Delete' || e.key === 'Del') {
             if (selectedBarcodeId) {
                 deleteBarcode(selectedBarcodeId);
@@ -1602,7 +1756,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ==========================================================================
-    // MULTIPAGE TABS RENDERING & INTERACTION LOGIC
+    // LOGIQUE DE RENDU ET D'INTERACTION DES ONGLETS MULTI-PAGES
     // ==========================================================================
     const workspaceTabs = document.getElementById('workspace-tabs');
     let pageBtnTooltip = null;
@@ -1626,7 +1780,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pageBtnTooltip = tooltip;
 
         const rect = btn.getBoundingClientRect();
-        // Position it above the button, centered
+        // Le positionner au-dessus du bouton, au centre
         tooltip.style.left = `${rect.left + rect.width / 2 + window.scrollX}px`;
         tooltip.style.top = `${rect.top + window.scrollY - 8}px`;
     }
@@ -1651,6 +1805,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 deleteBtnTooltip.remove();
             }
 
+            const pageSet = getPageSettings(pageNumber);
+            const pageName = (pageSet && pageSet.name) ? pageSet.name : `Page ${pageNumber}`;
+
             const tooltip = document.createElement('div');
             tooltip.className = 'input-tooltip tooltip-top';
             tooltip.innerHTML = `
@@ -1658,7 +1815,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
             </svg>
-            Supprimer la Page ${pageNumber}
+            Supprimer ${pageName}
         `;
 
             document.body.appendChild(tooltip);
@@ -1686,38 +1843,70 @@ document.addEventListener('DOMContentLoaded', () => {
         workspaceTabs.innerHTML = '';
 
         for (let i = 1; i <= totalPages; i++) {
+            const pageSet = getPageSettings(i);
             const tab = document.createElement('button');
             tab.type = 'button';
             tab.className = `workspace-tab ${i === activePage ? 'active' : ''}`;
 
-            // Tab text
+            // Onglet : texte
+            const pageName = (pageSet && pageSet.name) ? pageSet.name : `Page ${i}`;
             const tabText = document.createElement('span');
-            tabText.textContent = `Page ${i}`;
+            tabText.textContent = pageName;
             tab.appendChild(tabText);
 
-            // Tab status icon (Date mode / FLEG)
-            const pageSet = getPageSettings(i);
+            // Right-click to show custom context menu
+            tab.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                contextMenuTargetPage = i;
+
+                contextMenu.style.left = `${e.clientX}px`;
+                contextMenu.style.top = `${e.clientY}px`;
+                contextMenu.classList.remove('hidden');
+
+                contextMenu.innerHTML = `
+                    <ul>
+                        <li onclick="window.triggerContextMenuRenamePage()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                            Renommer la page
+                        </li>
+                        ${i > 1 ? `
+                            <li onclick="window.triggerContextMenuDeletePage()" class="menu-danger">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                Supprimer la page
+                            </li>
+                        ` : ''}
+                    </ul>
+                `;
+
+                // Ajuster la position
+                const menuRect = contextMenu.getBoundingClientRect();
+                if (e.clientX + menuRect.width > window.innerWidth) {
+                    contextMenu.style.left = `${window.innerWidth - menuRect.width - 8}px`;
+                }
+                if (e.clientY + menuRect.height > window.innerHeight) {
+                    contextMenu.style.top = `${window.innerHeight - menuRect.height - 8}px`;
+                }
+            });
+
+            // Icône de statut de l'onglet (Mode date / FLEG)
             if (pageSet && pageSet.isDateMode) {
-                const calIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                calIcon.setAttribute('viewBox', '0 0 24 24');
-                calIcon.setAttribute('fill', 'none');
-                calIcon.setAttribute('stroke', 'currentColor');
-                calIcon.setAttribute('stroke-width', '2.5');
-                calIcon.style.width = '12px';
-                calIcon.style.height = '12px';
-                calIcon.style.display = 'block';
-                calIcon.style.color = 'inherit';
-                calIcon.innerHTML = `<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>`;
-                tab.appendChild(calIcon);
+                const flegIcon = document.createElement('span');
+                flegIcon.style.fontSize = '12px';
+                flegIcon.style.lineHeight = '1';
+                flegIcon.style.display = 'block';
+                flegIcon.textContent = '🥬';
+                tab.appendChild(flegIcon);
             }
 
-            // Click to switch page
+            // Cliquer pour changer de page
             tab.addEventListener('click', (e) => {
                 if (e.target.closest('.workspace-tab-delete')) return;
                 switchPage(i);
             });
 
-            // Add delete button for pages > 1
+            // Ajouter le bouton de suppression pour les pages > 1
             if (i > 1) {
                 const delBtn = document.createElement('span');
                 delBtn.className = 'workspace-tab-delete';
@@ -1740,7 +1929,7 @@ document.addEventListener('DOMContentLoaded', () => {
             workspaceTabs.appendChild(tab);
         }
 
-        // Add page button
+        // Ajouter le bouton d'ajout de page
         if (totalPages < 4) {
             const addBtn = document.createElement('button');
             addBtn.type = 'button';
@@ -1772,13 +1961,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         container.innerHTML = '';
 
+        const pageSet = getPageSettings(pageNum);
+        const pageName = (pageSet && pageSet.name) ? pageSet.name : `Page ${pageNum}`;
+
         const toast = document.createElement('div');
         toast.className = 'toast';
         toast.innerHTML = `
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 16px; height: 16px; color: #ffffff; flex-shrink: 0; margin-right: 2px;">
                 <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
-            <span>Page ${pageNum} sélectionnée</span>
+            <span>${pageName} sélectionnée</span>
         `;
         container.appendChild(toast);
 
@@ -1810,22 +2002,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deletePage(pageNumber) {
         if (pageNumber === 1) return;
+        const pageSet = getPageSettings(pageNumber);
+        const pageName = (pageSet && pageSet.name) ? pageSet.name : `Page ${pageNumber}`;
         const confirmed = await showCustomConfirm(
             "Supprimer la page",
-            `Voulez-vous vraiment supprimer la Page ${pageNumber} et toutes ses étiquettes ?`
+            `Voulez-vous vraiment supprimer ${pageName} et toutes ses étiquettes ?`
         );
         if (confirmed) {
-            // Remove barcodes belonging to this page
+            // Supprimer les codes-barres appartenant à cette page
             barcodes = barcodes.filter(bc => bc.page !== pageNumber);
 
-            // Decrement page numbers for pages higher than the deleted page
+            // Décrémenter les numéros de page pour les pages supérieures à la page supprimée
             barcodes.forEach(bc => {
                 if (bc.page > pageNumber) {
                     bc.page--;
                 }
             });
 
-            // Shift page settings for pages higher than the deleted page
+            // Décaler les paramètres des pages supérieures à la page supprimée
             for (let p = pageNumber; p < totalPages; p++) {
                 pageSettings[p] = pageSettings[p + 1];
             }
@@ -1842,7 +2036,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================================================
-    // MULTIPAGE PRINT SELECTION MODAL LOGIC
+    // LOGIQUE DE LA BOÎTE MODALE DE SÉLECTION D'IMPRESSION MULTI-PAGES
     // ==========================================================================
     const printModal = document.getElementById('print-modal');
     const btnClosePrintModal = document.getElementById('btn-close-print-modal');
@@ -1866,6 +2060,8 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let i = 1; i <= totalPages; i++) {
                 const count = barcodes.filter(bc => bc.page === i).length;
                 const isCurrent = (i === activePage);
+                const pageSet = getPageSettings(i);
+                const pageName = (pageSet && pageSet.name) ? pageSet.name : `Page ${i}`;
                 const card = document.createElement('div');
                 card.className = `print-page-checkbox-card ${isCurrent ? 'selected' : ''}`;
                 card.innerHTML = `
@@ -1875,10 +2071,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
                     </div>
-                    <label for="print-chk-page-${i}" style="cursor: pointer; flex: 1; user-select: none;">Page ${i} (${count} code${count > 1 ? 's' : ''})</label>
+                    <label for="print-chk-page-${i}" style="cursor: pointer; flex: 1; user-select: none;">${pageName} (${count} code${count > 1 ? 's' : ''})</label>
                 `;
 
-                // Handle click on card wrapper to toggle checkbox
+                // Gérer le clic sur le conteneur de la carte pour basculer la case à cocher
                 card.addEventListener('click', (e) => {
                     if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
                         const chk = card.querySelector('input');
@@ -1960,7 +2156,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const sheet = document.createElement('div');
             sheet.className = 'print-sheet';
 
-            // Apply grid template class if active
+            // Appliquer la classe de modèle de grille si elle est active
             const pageSet = getPageSettings(pageNum);
             if (pageSet && pageSet.gridType !== 'free') {
                 sheet.classList.add(`template-${pageSet.gridType}`);
@@ -1975,7 +2171,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     card.classList.add('date-only-card');
                 }
 
-                // Calculate grid positions if active
+                // Calculer les positions de grille si actives
                 let left = bc.leftPercent;
                 let top = bc.topPercent;
                 let w = bc.cardWidthPercent;
@@ -2001,7 +2197,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.style.width = `${w}%`;
                 card.style.height = `${h}%`;
 
-                // Add header with title
+                // Ajouter l'en-tête avec le titre
                 const headerEl = document.createElement('div');
                 headerEl.className = 'barcode-card-header';
 
@@ -2044,7 +2240,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             printOutputContainer.appendChild(sheet);
 
-            // Re-render barcode images inside the newly created SVG nodes
+            // Recréer les images de codes-barres à l'intérieur des nouveaux nœuds SVG
             pageBarcodes.forEach(bc => {
                 if (bc.isDateOnly) return;
                 const svg = sheet.querySelector(`#print_svg_${bc.id}`);
@@ -2101,7 +2297,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ==========================================================================
-    // CUSTOM GRID SELECT DROPDOWN LOGIC
+    // LOGIQUE DE SÉLECTION DE GRILLE PERSONNALISÉE
     // ==========================================================================
     const customGridSelect = document.getElementById('custom-grid-select');
     const gridSelect = document.getElementById('page-grid-select');
@@ -2118,15 +2314,15 @@ document.addEventListener('DOMContentLoaded', () => {
         options.forEach(opt => {
             opt.addEventListener('click', (e) => {
                 e.stopPropagation();
-                
-                // Update selected classes
+
+                // Mettre à jour les classes sélectionnées
                 options.forEach(o => o.classList.remove('selected'));
                 opt.classList.add('selected');
 
-                // Update text display
+                // Mettre à jour l'affichage du texte
                 triggerText.textContent = opt.textContent;
 
-                // Sync the actual hidden select and dispatch change event
+                // Synchroniser le sélecteur réel masqué et déclencher l'événement change
                 gridSelect.value = opt.dataset.value;
                 gridSelect.dispatchEvent(new Event('change'));
 
@@ -2139,28 +2335,47 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const pageNameInput = document.getElementById('page-name-input');
+    if (pageNameInput) {
+        pageNameInput.addEventListener('input', () => {
+            const pageSet = getPageSettings(activePage);
+            const trimmed = pageNameInput.value.trim();
+            pageSet.name = trimmed || `Page ${activePage}`;
+            saveState();
+            renderTabs();
+        });
+
+        pageNameInput.addEventListener('blur', () => {
+            const pageSet = getPageSettings(activePage);
+            if (!pageNameInput.value.trim()) {
+                pageNameInput.value = `Page ${activePage}`;
+            }
+        });
+    }
+
     if (gridSelect) {
         gridSelect.addEventListener('change', () => {
             const pageSet = getPageSettings(activePage);
             pageSet.gridType = gridSelect.value;
 
-            // Limit barcodes to the new grid capacity to prevent overflow!
+            // Limiter les codes-barres à la capacité de la nouvelle grille pour éviter les débordements !
             let limit = Infinity;
             if (pageSet.gridType === 'grid-12') limit = 12;
             else if (pageSet.gridType === 'grid-24') limit = 24;
             else if (pageSet.gridType === 'grid-8') limit = 8;
+            else if (pageSet.gridType === 'grid-14') limit = 14;
 
             const pageBarcodes = barcodes.filter(bc => bc.page === activePage);
             if (pageBarcodes.length > limit) {
                 const toKeep = pageBarcodes.slice(0, limit);
                 const toRemove = pageBarcodes.slice(limit);
-                
-                // Remove elements from DOM
+
+                // Supprimer les éléments du DOM
                 toRemove.forEach(bc => {
                     if (bc.element) bc.element.remove();
                 });
 
-                // Update global barcodes array
+                // Mettre à jour le tableau global des codes-barres
                 barcodes = barcodes.filter(bc => bc.page !== activePage || toKeep.includes(bc));
             }
 
@@ -2180,11 +2395,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     "Voulez-vous remplacer les étiquettes de cette page par des étiquettes de date FLEG ?"
                 ).then(confirmed => {
                     if (confirmed) {
-                        fillPageWithDates(dateVal, 'grid-12');
+                        fillPageWithDates(dateVal, 'grid-14');
                     }
                 });
             } else {
-                fillPageWithDates(dateVal, 'grid-12');
+                fillPageWithDates(dateVal, 'grid-14');
             }
         });
     }
@@ -2220,7 +2435,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gridType === 'grid-12') count = 12;
         else if (gridType === 'grid-24') count = 24;
         else if (gridType === 'grid-8') count = 8;
-        else count = 1; // free mode
+        else if (gridType === 'grid-14') count = 14;
+        else count = 1; // mode libre
 
         let w = 34;
         let h = 11;
@@ -2244,8 +2460,8 @@ document.addEventListener('DOMContentLoaded', () => {
         dateInput.addEventListener('change', () => {
             const pageSet = getPageSettings(activePage);
             pageSet.dateValue = dateInput.value;
-            
-            // Sync all date-only labels on the active page
+
+            // Synchroniser toutes les étiquettes de date de la page active
             barcodes.forEach(bc => {
                 if (bc.page === activePage && bc.isDateOnly) {
                     bc.value = dateInput.value;
@@ -2263,7 +2479,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyPageSettingsToUI() {
         const pageSet = getPageSettings(activePage);
 
-        // Update grid select value
+        // Mettre à jour le champ de saisie du nom de la page
+        const pageNameInput = document.getElementById('page-name-input');
+        if (pageNameInput) {
+            pageNameInput.value = pageSet.name || `Page ${activePage}`;
+        }
+
+        // Mettre à jour la valeur de sélection de la grille
         if (gridSelect) {
             gridSelect.value = pageSet.gridType;
             if (customGridSelect) {
@@ -2276,7 +2498,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (triggerText) triggerText.textContent = targetOpt.textContent;
                 }
 
-                // Block grid changes if page is in date mode
+                // Bloquer les modifications de grille si la page est en mode date
                 if (pageSet.isDateMode) {
                     customGridSelect.style.opacity = '0.5';
                     customGridSelect.style.pointerEvents = 'none';
@@ -2289,12 +2511,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Update date input
+        // Mettre à jour le champ de saisie de date
         if (dateInput) {
             dateInput.value = pageSet.dateValue || today;
         }
 
-        // Update date mode status and Add button state
+        // Mettre à jour le statut du mode date et l'état du bouton d'ajout
         const statusEl = document.getElementById('date-mode-status');
         if (statusEl) {
             statusEl.style.display = pageSet.isDateMode ? 'flex' : 'none';
@@ -2336,7 +2558,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Apply grid template class to sheet
+        // Appliquer la classe de modèle de grille à la feuille
         if (printSheet) {
             printSheet.className = 'print-sheet';
             if (pageSet.gridType !== 'free') {
@@ -2344,7 +2566,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Redraw all barcodes of active page
+        // Redessiner tous les codes-barres de la page active
         document.querySelectorAll('.draggable-barcode').forEach(card => card.remove());
         barcodes.forEach(bc => {
             if (bc.page === activePage) {
@@ -2357,7 +2579,264 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-    // Prepopulate A4 workspace with saved barcodes, or one centered demo barcode on init if empty
+    function setupCustomDatePicker() {
+        const customDatePicker = document.getElementById('custom-datepicker');
+        const calendarDropdown = document.getElementById('datepicker-calendar');
+        if (!dateInput || !calendarDropdown) return;
+
+        // Déplacer le calendrier dans le body pour éviter le rognage par la barre latérale
+        document.body.appendChild(calendarDropdown);
+
+        // Surcharge de la date sur le champ de saisie pour garder le format ISO (AAAA-MM-JJ) dans la propriété
+        // mais afficher le format européen (JJ/MM/AAAA) dans la vue.
+        let _dateValue = today;
+        Object.defineProperty(dateInput, 'value', {
+            get() {
+                return _dateValue;
+            },
+            set(val) {
+                // Si le format est déjà JJ/MM/AAAA, le convertir en AAAA-MM-JJ
+                let isoValue = val;
+                if (val && val.includes('/')) {
+                    const parts = val.split('/');
+                    if (parts.length === 3) {
+                        isoValue = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    }
+                }
+                _dateValue = isoValue;
+
+                // Set HTML attribute and internal DOM value
+                dateInput.setAttribute('value', isoValue);
+                const nativeValueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+
+                // Formater pour l'affichage : JJ/MM/AAAA
+                let displayVal = isoValue;
+                if (isoValue && isoValue.includes('-')) {
+                    const parts = isoValue.split('-');
+                    if (parts.length === 3) {
+                        displayVal = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                    }
+                }
+                nativeValueSetter.call(dateInput, displayVal);
+            },
+            configurable: true
+        });
+
+        // Initialiser la valeur par défaut
+        dateInput.value = today;
+
+        let currentDate = new Date(); // suit le mois/année affiché dans le calendrier
+
+        function parseCurrentInputDate() {
+            const val = _dateValue || today;
+            const parts = val.split('-');
+            if (parts.length === 3) {
+                return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            }
+            return new Date();
+        }
+
+        function renderCalendar() {
+            calendarDropdown.innerHTML = '';
+
+            const selectedDate = parseCurrentInputDate();
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            // Noms des mois en français
+            const monthsFR = [
+                "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+                "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+            ];
+
+            // 1. En-tête
+            const header = document.createElement('div');
+            header.className = 'calendar-header';
+
+            const title = document.createElement('span');
+            title.className = 'calendar-title';
+            title.textContent = `${monthsFR[month]} ${year}`;
+            header.appendChild(title);
+
+            const navBtns = document.createElement('div');
+            navBtns.className = 'calendar-nav-buttons';
+
+            const prevBtn = document.createElement('button');
+            prevBtn.type = 'button';
+            prevBtn.className = 'calendar-nav-btn';
+            prevBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>`;
+            prevBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                currentDate.setMonth(currentDate.getMonth() - 1);
+                renderCalendar();
+            });
+            navBtns.appendChild(prevBtn);
+
+            const nextBtn = document.createElement('button');
+            nextBtn.type = 'button';
+            nextBtn.className = 'calendar-nav-btn';
+            nextBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
+            nextBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                renderCalendar();
+            });
+            navBtns.appendChild(nextBtn);
+
+            header.appendChild(navBtns);
+            calendarDropdown.appendChild(header);
+
+            // 2. Libellés des jours de la semaine
+            const weekdays = document.createElement('div');
+            weekdays.className = 'calendar-weekdays';
+            const dayLabels = ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"];
+            dayLabels.forEach(lbl => {
+                const dayEl = document.createElement('span');
+                dayEl.className = 'calendar-weekday';
+                dayEl.textContent = lbl;
+                weekdays.appendChild(dayEl);
+            });
+            calendarDropdown.appendChild(weekdays);
+
+            // 3. Grille des jours
+            const daysGrid = document.createElement('div');
+            daysGrid.className = 'calendar-days';
+
+            // Premier jour du mois
+            const firstDay = new Date(year, month, 1);
+            // En JavaScript getDay() renvoie 0=Dimanche, 1=Lundi ... 6=Samedi
+            // Convertir en 0=Lundi ... 6=Dimanche
+            let firstDayIdx = (firstDay.getDay() + 6) % 7;
+
+            // Jours du mois en cours
+            const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+            // Jours du mois précédent
+            const totalDaysInPrevMonth = new Date(year, month, 0).getDate();
+
+            // Jours restants du mois précédent
+            for (let i = firstDayIdx - 1; i >= 0; i--) {
+                const dayVal = totalDaysInPrevMonth - i;
+                const cell = document.createElement('div');
+                cell.className = 'calendar-day other-month';
+                cell.textContent = dayVal;
+                daysGrid.appendChild(cell);
+            }
+
+            // Jours du mois en cours
+            const todayObj = new Date();
+            for (let i = 1; i <= totalDaysInMonth; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-day';
+                cell.textContent = i;
+
+                // Marquer le jour sélectionné
+                if (
+                    selectedDate.getDate() === i &&
+                    selectedDate.getMonth() === month &&
+                    selectedDate.getFullYear() === year
+                ) {
+                    cell.classList.add('selected');
+                }
+
+                // Marquer aujourd'hui
+                if (
+                    todayObj.getDate() === i &&
+                    todayObj.getMonth() === month &&
+                    todayObj.getFullYear() === year
+                ) {
+                    cell.classList.add('today');
+                }
+
+                cell.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const formattedM = (month + 1).toString().padStart(2, '0');
+                    const formattedD = i.toString().padStart(2, '0');
+                    const newIsoVal = `${year}-${formattedM}-${formattedD}`;
+
+                    dateInput.value = newIsoVal;
+                    dateInput.dispatchEvent(new Event('change'));
+                    calendarDropdown.classList.add('hidden');
+                });
+
+                daysGrid.appendChild(cell);
+            }
+
+            // Jours du mois suivant pour compléter la grille de 42 cellules (6 lignes)
+            const totalCells = daysGrid.children.length;
+            const remainingCells = 42 - totalCells;
+            for (let i = 1; i <= remainingCells; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-day other-month';
+                cell.textContent = i;
+                daysGrid.appendChild(cell);
+            }
+
+            calendarDropdown.appendChild(daysGrid);
+
+            // 4. Pied de page
+            const footer = document.createElement('div');
+            footer.className = 'calendar-footer';
+
+            const clearBtn = document.createElement('button');
+            clearBtn.type = 'button';
+            clearBtn.className = 'calendar-footer-btn';
+            clearBtn.textContent = 'Effacer';
+            clearBtn.style.visibility = 'hidden'; // Conserver la mise en page mais masquer
+            footer.appendChild(clearBtn);
+
+            const todayBtn = document.createElement('button');
+            todayBtn.type = 'button';
+            todayBtn.className = 'calendar-footer-btn';
+            todayBtn.textContent = "Aujourd'hui";
+            todayBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const now = new Date();
+                const formattedM = (now.getMonth() + 1).toString().padStart(2, '0');
+                const formattedD = now.getDate().toString().padStart(2, '0');
+                const newIsoVal = `${now.getFullYear()}-${formattedM}-${formattedD}`;
+
+                currentDate = new Date();
+                dateInput.value = newIsoVal;
+                dateInput.dispatchEvent(new Event('change'));
+                calendarDropdown.classList.add('hidden');
+            });
+            footer.appendChild(todayBtn);
+
+            calendarDropdown.appendChild(footer);
+        }
+
+        // Basculer la visibilité du calendrier déroulant
+        dateInput.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (calendarDropdown.classList.contains('hidden')) {
+                currentDate = parseCurrentInputDate();
+                renderCalendar();
+
+                // Positionner par rapport au champ de saisie
+                const rect = dateInput.getBoundingClientRect();
+                calendarDropdown.style.left = `${rect.right + 12}px`;
+                calendarDropdown.style.top = `${rect.top + rect.height / 2}px`;
+                calendarDropdown.style.transform = 'translateY(-50%)';
+
+                calendarDropdown.classList.remove('hidden');
+            } else {
+                calendarDropdown.classList.add('hidden');
+            }
+        });
+
+        // Masquer le calendrier lors d'un clic en dehors
+        document.addEventListener('click', (e) => {
+            if (
+                customDatePicker &&
+                !customDatePicker.contains(e.target) &&
+                !calendarDropdown.contains(e.target)
+            ) {
+                calendarDropdown.classList.add('hidden');
+            }
+        });
+    }
+
+    // Pré-remplir l'espace de travail A4 avec les codes-barres sauvegardés, ou un code de démo centré à l'initialisation si vide
     if (!loadState()) {
         addNewBarcode("AUCHAN-35002", "CODE128");
     }

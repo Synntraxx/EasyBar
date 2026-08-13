@@ -1,5 +1,5 @@
 /* ==========================================================================
-   RESET & SYSTEM VARIABLES (AUCHAN DESIGN SYSTEM)
+   RÉINITIALISATION ET VARIABLES SYSTÈME (CHARTE DESIGN AUCHAN)
    ========================================================================== */
 *,
 *::before,
@@ -11,27 +11,27 @@
 
 :root {
     --bg-workspace: #cdcdcd;
-    /* Very light gray interface background */
+    /* Fond d'interface gris très clair */
     --bg-sidebar: #ffffff;
-    /* Pure white sidebar */
+    /* Barre latérale blanc pur */
     --bg-card: #ffffff;
-    /* Pure white element containers */
+    /* Conteneurs d'éléments blanc pur */
 
     --primary-color: #d6180b;
-    /* Auchan brand red accent */
+    /* Accent rouge de la marque Auchan */
     --primary-hover: #b21207;
-    /* Hover red state */
+    /* État rouge au survol */
     --primary-light: rgba(214, 24, 11, 0.06);
 
     --text-dark: #1f2937;
-    /* Dark gray for headings and main texts */
+    /* Gris foncé pour les titres et les textes principaux */
     --text-muted: #4b5563;
-    /* Medium gray for descriptions/labels */
+    /* Gris moyen pour les descriptions/libellés */
     --text-light: #9ca3af;
-    /* Light gray for borders/placeholders */
+    /* Gris clair pour les bordures/indicateurs */
 
     --border-color: #e5e7eb;
-    /* Light gray borders */
+    /* Bordures gris clair */
 
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     --shadow-lg: 0 10px 20px -5px rgba(0, 0, 0, 0.08), 0 8px 8px -6px rgba(0, 0, 0, 0.08);
@@ -49,7 +49,7 @@
 }
 
 /* ==========================================================================
-   APP CONTAINER LAYOUT
+   MISE EN PAGE DU CONTENEUR DE L'APPLICATION
    ========================================================================== */
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -69,7 +69,7 @@ body {
 }
 
 /* ==========================================================================
-   SIDEBAR (LEFT PANEL DESIGN)
+   BARRE LATÉRALE (DESIGN DU PANNEAU GAUCHE)
    ========================================================================== */
 .sidebar {
     background-color: var(--bg-sidebar);
@@ -110,21 +110,20 @@ body {
     color: var(--primary-color);
 }
 
-/* Sidebar Section Blocks */
+/* Blocs de section de la barre latérale */
 .sidebar-section {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 }
 
 .sidebar-section h3 {
     font-size: 1rem;
     font-weight: 600;
     color: var(--text-muted);
-    margin-bottom: 20px;
 }
 
-/* Forms Input Styles */
+/* Styles de saisie des formulaires */
 .input-group {
     display: flex;
     flex-direction: column;
@@ -164,14 +163,14 @@ input[type="text"]:focus,
     background-color: #ffffff;
 }
 
-/* Custom Select Container */
+/* Conteneur de sélection personnalisé */
 .custom-select {
     position: relative;
     width: 100%;
     user-select: none;
 }
 
-/* Hidden Select but focusable */
+/* Sélecteur masqué mais focalisable */
 .hidden-select {
     position: absolute;
     width: 0;
@@ -180,7 +179,7 @@ input[type="text"]:focus,
     pointer-events: none;
 }
 
-/* Custom Select Trigger */
+/* Déclencheur du menu de sélection */
 .custom-select-trigger {
     display: flex;
     align-items: center;
@@ -219,7 +218,7 @@ input[type="text"]:focus,
     transform: rotate(180deg);
 }
 
-/* Custom Select Dropdown Options */
+/* Options de sélection personnalisées */
 .custom-select-dropdown {
     position: absolute;
     top: 45px;
@@ -242,7 +241,7 @@ input[type="text"]:focus,
     transform: translateY(0);
 }
 
-/* Custom Option Item */
+/* Option personnalisée */
 .custom-select-option {
     border-radius: 5px;
     padding: 10px 12px;
@@ -273,7 +272,7 @@ input[type="text"]:focus,
     margin-bottom: 0;
 }
 
-/* Button UI styling */
+/* Style de l'interface utilisateur des boutons */
 .btn {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     display: inline-flex;
@@ -322,7 +321,7 @@ input[type="text"]:focus,
 
 
 
-/* Sidebar controls footer */
+/* Pied de page des contrôles de la barre latérale */
 .sidebar-footer {
     display: flex;
     flex-direction: column;
@@ -332,47 +331,8 @@ input[type="text"]:focus,
     border-top: 2px solid var(--border-color);
 }
 
-.sheets-saved-counter {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 10px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #10b981;
-    border: 2px solid #10b981;
-    /* Green color to represent eco/page saving */
-    background-color: rgb(16 185 129 / 25%);
-    padding: 10px 14px;
-    border-radius: var(--radius-md);
-    margin-top: 4px;
-    transition: var(--transition);
-    user-select: none;
-}
-
-.sheets-saved-counter svg {
-    width: 18px;
-    height: 18px;
-    stroke: currentColor;
-    flex-shrink: 0;
-}
-
-.counter-text-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    line-height: 1.35;
-}
-
-.eco-details {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #059669;
-    /* Darker green for readability */
-}
-
 /* ==========================================================================
-   CENTRAL APERCU WORKSPACE & A4 PRINT SHEET
+   ESPACE DE TRAVAIL CENTRAL ET FEUILLE D'IMPRESSION A4
    ========================================================================== */
 .workspace-area {
     display: flex;
@@ -402,22 +362,23 @@ input[type="text"]:focus,
     position: relative;
     height: 100%;
     aspect-ratio: 1 / 1.414;
-    /* Custom optimized screen ratio */
+    /* Rapport d'écran optimisé personnalisé */
     margin: 0 auto;
     overflow: visible;
 }
 
-/* Print sheet grid overlay templates */
+/* Modèles de superposition de grille de feuille d'impression */
 .print-sheet.template-grid-12::before,
 .print-sheet.template-grid-24::before,
-.print-sheet.template-grid-8::before {
+.print-sheet.template-grid-8::before,
+.print-sheet.template-grid-14::before {
     content: "";
     position: absolute;
     inset: 0;
     pointer-events: none;
     border: 1px dashed rgba(0, 0, 0, 0.12);
     z-index: 1;
-    /* behind barcodes but on top of placeholder */
+    /* derrière les codes-barres mais au-dessus de l'indicateur d'emplacement */
     border-radius: inherit;
 }
 
@@ -426,7 +387,7 @@ input[type="text"]:focus,
         linear-gradient(to right, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px),
         linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px);
     background-size: 50% 16.6666%;
-    /* 2 cols, 6 rows */
+    /* 2 colonnes, 6 lignes */
 }
 
 .print-sheet.template-grid-24::before {
@@ -434,7 +395,7 @@ input[type="text"]:focus,
         linear-gradient(to right, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px),
         linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px);
     background-size: 33.3333% 12.5%;
-    /* 3 cols, 8 rows */
+    /* 3 colonnes, 8 lignes */
 }
 
 .print-sheet.template-grid-8::before {
@@ -442,10 +403,18 @@ input[type="text"]:focus,
         linear-gradient(to right, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px),
         linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px);
     background-size: 50% 25%;
-    /* 2 cols, 4 rows */
+    /* 2 colonnes, 4 lignes */
 }
 
-/* Hide grid guidelines during printing */
+.print-sheet.template-grid-14::before {
+    background-image:
+        linear-gradient(to right, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px),
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px);
+    background-size: 50% 14.2857%;
+    /* 2 colonnes, 7 lignes */
+}
+
+/* Masquer les repères de grille lors de l'impression */
 @media print {
     #print-output-container .print-sheet::before {
         display: none !important;
@@ -455,29 +424,38 @@ input[type="text"]:focus,
 
 
 /* ==========================================================================
-   DRAGGABLE & RESIZABLE BARCODE CARD ELEMENTS
+   ÉLÉMENTS DE CODE-BARRES GLISSABLES ET REDIMENSIONNABLES
    ========================================================================== */
 .draggable-barcode {
     position: absolute;
     background: #ffffff;
     border: 2px solid transparent;
-    /* No visible border by default */
+    /* Pas de bordure visible par défaut */
     border-radius: 8px 8px 0 8px;
     padding: 2.5% 3.5%;
-    cursor: move;
+    cursor: grab;
     user-select: none;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     box-shadow: none;
-    /* No shadow by default */
+    /* Pas d'ombre par défaut */
     min-width: 15%;
     min-height: 6%;
     box-sizing: border-box;
     transition: box-shadow 0.15s, border-color 0.15s;
     container-type: inline-size;
-    /* Sets the card as a container for query units */
+    /* Définit la carte comme conteneur pour les requêtes CSS @container */
+}
+
+.draggable-barcode.dragging {
+    cursor: grabbing !important;
+}
+
+body.dragging-active,
+body.dragging-active * {
+    cursor: grabbing !important;
 }
 
 .draggable-barcode svg {
@@ -488,14 +466,14 @@ input[type="text"]:focus,
     display: block;
     object-fit: contain;
     flex: 1;
-    /* Allows SVG to take up remaining height beneath the title */
+    /* Permet au SVG d'occuper la hauteur restante sous le titre */
 }
 
 .draggable-barcode svg text {
     font-weight: 600 !important;
 }
 
-/* Custom text label/header at the top of the card */
+/* Étiquette de texte/en-tête personnalisée en haut de la carte */
 .barcode-card-header {
     display: flex;
     justify-content: space-between;
@@ -509,7 +487,7 @@ input[type="text"]:focus,
 
 .barcode-card-title {
     font-size: 5cqw;
-    /* Proportional to card width */
+    /* Proportionnel à la largeur de la carte */
     font-weight: 700;
     text-transform: uppercase;
     color: var(--text-dark);
@@ -521,7 +499,7 @@ input[type="text"]:focus,
     width: 100%;
 }
 
-/* Left-align if the date is also visible next to it */
+/* Aligner à gauche si la date est également visible à côté */
 .barcode-card-header:not(:has(.barcode-card-date.hidden)) .barcode-card-title {
     text-align: left;
     width: auto;
@@ -536,7 +514,7 @@ input[type="text"]:focus,
     white-space: nowrap;
 }
 
-/* Date-only card styles */
+/* Styles de cartes date uniquement */
 .draggable-barcode.date-only-card {
     display: flex;
     flex-direction: column;
@@ -548,7 +526,7 @@ input[type="text"]:focus,
 
 .draggable-barcode.date-only-card .barcode-card-header {
     justify-content: center;
-    /* Center the title if present */
+    /* Centrer le titre s'il est présent */
     margin-bottom: 2%;
     border-bottom: 1.5px solid rgba(0, 0, 0, 0.06);
     padding-bottom: 2%;
@@ -561,7 +539,7 @@ input[type="text"]:focus,
 
 .date-only-value {
     font-size: 11.5cqw;
-    /* Large, responsive to card size */
+    /* Grand, s'adapte à la taille de la carte */
     font-weight: 800;
     color: var(--text-dark);
     text-align: center;
@@ -576,18 +554,20 @@ input[type="text"]:focus,
     letter-spacing: -0.02em;
 }
 
-/* Disable drag cursor and hide resize handles when grid templates are active */
+/* Désactiver le curseur de glissement et masquer les poignées de redimensionnement en mode grille */
 .print-sheet.template-grid-12 .draggable-barcode,
 .print-sheet.template-grid-24 .draggable-barcode,
-.print-sheet.template-grid-8 .draggable-barcode {
+.print-sheet.template-grid-8 .draggable-barcode,
+.print-sheet.template-grid-14 .draggable-barcode {
     cursor: default !important;
     border-radius: 4px !important;
-    /* snap-fitting card borders */
+    /* bordures de cartes s'adaptant à l'aimantation */
 }
 
 .print-sheet.template-grid-12 .barcode-resize-handle,
 .print-sheet.template-grid-24 .barcode-resize-handle,
-.print-sheet.template-grid-8 .barcode-resize-handle {
+.print-sheet.template-grid-8 .barcode-resize-handle,
+.print-sheet.template-grid-14 .barcode-resize-handle {
     display: none !important;
 }
 
@@ -600,7 +580,7 @@ input[type="text"]:focus,
     border-color: var(--primary-color);
 }
 
-/* Resize corner handle icon */
+/* Icône de la poignée de redimensionnement */
 .barcode-resize-handle {
     position: absolute;
     bottom: 3px;
@@ -626,7 +606,7 @@ input[type="text"]:focus,
 
 
 
-/* Dynamic Inline Value Editing Input Overlay */
+/* Champ de texte dynamique superposé pour modifier directement la valeur */
 .barcode-inline-edit-box {
     position: absolute;
     inset: 4px;
@@ -658,7 +638,7 @@ input[type="text"]:focus,
 }
 
 /* ==========================================================================
-   CUSTOM CONTEXT MENU
+   MENU CONTEXTUEL PERSONNALISÉ
    ========================================================================== */
 .custom-context-menu {
     position: absolute;
@@ -747,7 +727,7 @@ input[type="text"]:focus,
     background-color: rgba(214, 24, 11, 0.12);
 }
 
-/* Submenu items list styling */
+/* Style de la liste des éléments de sous-menu */
 .menu-submenu::after {
     content: "›";
     position: absolute;
@@ -776,11 +756,11 @@ input[type="text"]:focus,
 .custom-context-menu.submenu-up .submenu-list {
     top: auto;
     bottom: -4px;
-    /* aligned to bottom margin of parent list */
+    /* aligné sur la marge inférieure de la liste parente */
 }
 
 /* ==========================================================================
-   CUSTOM MODAL DIALOG
+   BOÎTE DE DIALOGUE MODALE PERSONNALISÉE
    ========================================================================== */
 .modal-backdrop {
     position: fixed;
@@ -894,7 +874,8 @@ input[type="text"]:focus,
     border-radius: var(--radius-md);
     box-sizing: border-box;
     transition: border-color 0.15s, box-shadow 0.15s;
-    background-color: #ffffff; /* ensure white background */
+    background-color: #ffffff;
+    /* garantir un fond blanc */
 }
 
 .modal-body input:focus,
@@ -903,7 +884,7 @@ input[type="text"]:focus,
     border-color: var(--primary-color);
 }
 
-/* Title Shortcuts Container */
+/* Conteneur des raccourcis de titres */
 .title-shortcuts {
     display: flex;
     flex-wrap: wrap;
@@ -911,7 +892,7 @@ input[type="text"]:focus,
     justify-content: space-between;
 }
 
-/* Shortcut Badge Button */
+/* Bouton de badge de raccourci */
 .shortcut-badge {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 0.8rem;
@@ -938,14 +919,14 @@ input[type="text"]:focus,
     margin-top: 8px;
 }
 
-/* Floating Help Button */
+/* Bouton d'aide flottant */
 .btn-floating-help {
     position: fixed;
     bottom: 24px;
     right: 24px;
     width: 44px;
     height: 44px;
-    border-radius: 50%;
+    border-radius: 8px;
     background-color: var(--primary-color);
     color: #ffffff;
     border: none;
@@ -961,7 +942,6 @@ input[type="text"]:focus,
 .btn-floating-help:hover {
     background-color: var(--primary-hover);
     transform: translateY(-2px) scale(1.06);
-    box-shadow: 0 12px 20px -5px rgba(214, 24, 11, 0.3);
 }
 
 .btn-floating-help svg {
@@ -969,24 +949,106 @@ input[type="text"]:focus,
     height: 20px;
 }
 
-/* Help Modal Specifics */
-.modal-help-content {
-    max-width: 520px;
-    width: 95%;
+/* ==========================================================================
+   PANNEAU DE TIROIR D'AIDE (GLISSEMENT DEPUIS LA DROITE AVEC FLOU)
+   ========================================================================== */
+.help-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    transition: opacity 0.3s ease, backdrop-filter 0.3s ease, background 0.3s ease;
+    opacity: 1;
+    pointer-events: auto;
+    display: flex;
+    justify-content: flex-end;
 }
 
-.modal-help-body {
-    max-height: 480px;
+.help-backdrop.hidden {
+    opacity: 0;
+    pointer-events: none;
+    backdrop-filter: blur(0px);
+    background: rgba(15, 23, 42, 0);
+}
+
+.help-drawer {
+    background: #ffffff;
+    width: 480px;
+    max-width: 100vw;
+    height: 100vh;
+    box-shadow: -6px 0 30px rgba(0, 0, 0, 0.15);
+    padding: 30px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-sizing: border-box;
+    transform: translateX(0);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.help-backdrop.hidden .help-drawer {
+    transform: translateX(100%);
+}
+
+.help-drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 12px;
+}
+
+.help-drawer-header h2 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.btn-close-drawer {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    transition: var(--transition);
+}
+
+.btn-close-drawer:hover {
+    color: var(--primary-color);
+}
+
+.help-drawer-body {
+    flex: 1;
     overflow-y: auto;
-    padding-right: 0;
-    gap: 16px;
-    scrollbar-width: none;
-    /* Hide scrollbar for Firefox */
+    padding-right: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
 }
 
-.modal-help-body::-webkit-scrollbar {
-    display: none;
-    /* Hide scrollbar for Chrome, Safari, Opera */
+.help-drawer-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.help-drawer-body::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 3px;
+}
+
+.help-drawer-footer {
+    border-top: 2px solid var(--border-color);
+    padding-top: 16px;
+    margin-top: auto;
 }
 
 .help-section h4 {
@@ -1033,7 +1095,7 @@ input[type="text"]:focus,
     font-weight: bold;
 }
 
-/* Sidebar Input Tooltip */
+/* Info-bulle pour la saisie de la barre latérale */
 .input-tooltip {
     position: absolute;
     z-index: 99999;
@@ -1099,6 +1161,20 @@ input[type="text"]:focus,
     border-color: #059669 transparent transparent transparent !important;
 }
 
+.input-tooltip.tooltip-left {
+    transform: translate(-100%, -50%) !important;
+    animation: tooltipLeftFadeIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.input-tooltip.tooltip-left::before {
+    left: auto !important;
+    right: -6px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    border-width: 6px 0 6px 6px !important;
+    border-color: transparent transparent transparent var(--primary-color) !important;
+}
+
 @keyframes tooltipBottomFadeIn {
     from {
         opacity: 0;
@@ -1135,13 +1211,25 @@ input[type="text"]:focus,
     }
 }
 
+@keyframes tooltipLeftFadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-95%, -50%) scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-100%, -50%) scale(1);
+    }
+}
+
 /* ==========================================================================
-   PRINT MEDIA STYLES
+   STYLES POUR L'IMPRESSION (MEDIA PRINT)
    ========================================================================== */
 @page {
     size: A4;
     margin: 0;
-    /* Hides default browser header (date, URL) and footer (page number) */
+    /* Masque l'en-tête et le pied de page par défaut du navigateur */
 }
 
 @media print {
@@ -1202,7 +1290,7 @@ input[type="text"]:focus,
 }
 
 /* ==========================================================================
-   WORKSPACE TABS & MULTIPAGE PRINT UI
+   ONGLETS DE L'ESPACE DE TRAVAIL ET INTERFACE D'IMPRESSION MULTI-PAGES
    ========================================================================== */
 .workspace-tabs-container {
     display: flex;
@@ -1286,7 +1374,7 @@ input[type="text"]:focus,
     color: var(--primary-color);
 }
 
-/* Print Modal Page Checkboxes list */
+/* Liste des cases à cocher des pages dans la modale d'impression */
 .print-pages-list {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1362,7 +1450,7 @@ input[type="text"]:focus,
     display: none;
 }
 
-/* Toast Notification */
+/* Notification Toast */
 .toast-container {
     position: fixed;
     top: 24px;
@@ -1413,7 +1501,7 @@ input[type="text"]:focus,
     }
 }
 
-/* Disabled buttons and menu items */
+/* Boutons et éléments de menu désactivés */
 .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed !important;
@@ -1426,7 +1514,7 @@ input[type="text"]:focus,
     pointer-events: none;
 }
 
-/* Checkbox and Date input styles for Page settings */
+/* Styles des cases à cocher et des champs date pour les paramètres de la page */
 .input-group-row {
     display: flex;
     align-items: center;
@@ -1500,11 +1588,200 @@ input[type="text"]:focus,
     background-color: #ffffff;
 }
 
-/* FLEG Button premium hover/active states */
+/* États de survol/actifs premium du bouton FLEG */
 .btn-fleg {
     box-sizing: border-box;
 }
 
 .btn-fleg:hover {
     background-color: rgba(16, 185, 129, 0.459);
+}
+
+/* ==========================================================================
+   SÉLECTEUR DE DATE / CALENDRIER DÉROULANT PERSONNALISÉ
+   ========================================================================== */
+.custom-datepicker {
+    position: relative;
+}
+
+.datepicker-calendar {
+    position: fixed;
+    width: 260px;
+    background-color: #ffffff;
+    border: 2px solid var(--primary-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    z-index: 10000;
+    box-shadow: 0 0px 40px -10px rgb(0 0 0 / 41%);
+    padding: 14px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    user-select: none;
+    transform-origin: left center;
+    animation: calendarAnim 0.15s cubic-bezier(0, 0, 0.2, 1);
+}
+
+@keyframes calendarAnim {
+    from {
+        opacity: 0;
+        transform: translateY(-50%) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(-50%) scale(1);
+    }
+}
+
+.datepicker-calendar::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 100%;
+    transform: translateY(-50%);
+    border-width: 8px;
+    border-style: solid;
+    border-color: transparent var(--primary-color) transparent transparent;
+}
+
+.datepicker-calendar::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 100%;
+    transform: translateY(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent #ffffff transparent transparent;
+    margin-right: -2px;
+}
+
+.datepicker-calendar.hidden {
+    display: none !important;
+}
+
+/* En-tête du calendrier */
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px;
+}
+
+.calendar-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    text-transform: capitalize;
+}
+
+.calendar-nav-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+.calendar-nav-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 6px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.calendar-nav-btn:hover {
+    background-color: #f3f4f6;
+    color: var(--text-dark);
+}
+
+.calendar-nav-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Libellés des jours de la semaine */
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-light);
+    margin-bottom: 2px;
+}
+
+.calendar-weekday {
+    padding: 2px 0;
+}
+
+/* Grille des jours */
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.calendar-day:hover:not(.other-month):not(.selected) {
+    background-color: #c9c9c9;
+}
+
+.calendar-day.other-month {
+    color: var(--text-light);
+    font-weight: 400;
+    cursor: default;
+    pointer-events: none;
+}
+
+.calendar-day.today {
+    border: 2px solid var(--primary-color);
+}
+
+.calendar-day.selected {
+    background-color: var(--primary-color) !important;
+    color: #ffffff !important;
+}
+
+/* Section du bas du calendrier */
+.calendar-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 2px solid var(--border-color);
+    padding-top: 10px;
+    margin-top: 4px;
+}
+
+.calendar-footer-btn {
+    background: none;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+.calendar-footer-btn:hover {
+    background-color: var(--primary-light);
 }

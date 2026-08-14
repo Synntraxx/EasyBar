@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Gestionnaire principal de génération de codes-barres avec dimensionnement en pourcentage pour préserver l'échelle
-    function addNewBarcode(value, format, cardWPct = 34, cardHPct = 11, height = 55, width = 2, displayValue = true, title = "", leftPercent = null, topPercent = null, page = null, isDateOnly = false) {
+    function addNewBarcode(value, format, cardWPct = 50, cardHPct = 16.5, height = 85, width = 2, displayValue = true, title = "", leftPercent = null, topPercent = null, page = null, isDateOnly = false) {
         const finalPage = page !== null ? page : activePage;
         const pageSet = getPageSettings(finalPage);
 
@@ -2438,8 +2438,8 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (gridType === 'grid-14') count = 14;
         else count = 1; // mode libre
 
-        let w = 34;
-        let h = 11;
+        let w = 50;
+        let h = 16.5;
         const gridConfig = getGridConfig(gridType);
         if (gridConfig) {
             w = gridConfig.wPct;
@@ -2447,7 +2447,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         for (let i = 0; i < count; i++) {
-            addNewBarcode(dateVal, 'CODE128', w, h, 55, 2, true, '', null, null, activePage, true);
+            addNewBarcode(dateVal, 'CODE128', w, h, 85, 2, true, '', null, null, activePage, true);
         }
 
         applyPageSettingsToUI();

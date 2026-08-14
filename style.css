@@ -1697,7 +1697,7 @@ body.dragging-active * {
 }
 
 .calendar-nav-btn:hover {
-    background-color: #f3f4f6;
+    background-color: #c9c9c9;
     color: var(--text-dark);
 }
 

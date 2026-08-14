@@ -539,7 +539,7 @@ body.dragging-active * {
 }
 
 .date-only-value {
-    font-size: 11.5cqw;
+    font-size: 9cqw;
     /* Grand, s'adapte à la taille de la carte */
     font-weight: 800;
     color: var(--text-dark);

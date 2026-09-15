@@ -16,7 +16,6 @@ EasyBar est un outil web SaaS interne haut de gamme, développé pour simplifier
 *   **Gabarits Standards** : 12 étiquettes (105x49 mm), 24 étiquettes (70x37 mm), 8 étiquettes (105x74 mm).
 *   **Gabarit FLEG (7x2)** : Spécialement optimisé pour l'étiquetage Fruits et Légumes (14 étiquettes).
     *   *Génération de Dates Rapide* : Génère et distribue automatiquement des dates sur toutes les étiquettes en un seul clic.
-    *   *Sécurité Mode Date* : Verrouille la grille et la structure de la page pour éviter toute modification accidentelle d'étiquettes de prix/fraîcheur.
 
 ### 3. Espace de Travail Interactif
 *   **Glisser-Déposer (Drag & Drop)** : Positionnement ultra-fluide des étiquettes en mode libre.
@@ -102,4 +101,4 @@ Pour que les étiquettes s'alignent parfaitement avec les planches autocollantes
 └── README.md      # Ce fichier de documentation
 ```
 
-*Développé pour la productivité et la fluidité des équipes en magasin/drive Auchan.*
+*Développé pour la productivité et la fluidité des équipes en drive/magasin Auchan.*

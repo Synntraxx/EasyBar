@@ -57,6 +57,22 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTooltip = null;
     let tooltipTimeout = null;
 
+    function hideValueInputTooltip() {
+        if (tooltipTimeout) {
+            clearTimeout(tooltipTimeout);
+            tooltipTimeout = null;
+        }
+        if (currentTooltip) {
+            currentTooltip.style.opacity = '0';
+            currentTooltip.style.transform = 'translateY(-50%) translateX(8px)';
+            const tooltipToRemove = currentTooltip;
+            currentTooltip = null;
+            setTimeout(() => {
+                tooltipToRemove.remove();
+            }, 250);
+        }
+    }
+
     // ==========================================================================
     // LOGIQUE DU MENU DÉROULANT DE SÉLECTION PERSONNALISÉ
     // ==========================================================================
@@ -142,20 +158,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     valueInput.addEventListener('input', () => {
         // Retirer l'info-bulle si elle est active lorsque l'utilisateur commence à saisir
-        if (currentTooltip) {
-            currentTooltip.style.opacity = '0';
-            currentTooltip.style.transform = 'translateY(-50%) translateX(8px)';
-            const tooltipToRemove = currentTooltip;
-            setTimeout(() => {
-                tooltipToRemove.remove();
-                if (currentTooltip === tooltipToRemove) {
-                    currentTooltip = null;
-                }
-            }, 300);
-        }
+        hideValueInputTooltip();
         if (formatSelect.value === 'CODE39') {
             valueInput.value = valueInput.value.toUpperCase();
         }
+    });
+
+    valueInput.addEventListener('blur', () => {
+        // Retirer immédiatement l'info-bulle dès que l'utilisateur clique ailleurs
+        hideValueInputTooltip();
     });
     formatSelect.addEventListener('change', () => {
         if (formatSelect.value === 'CODE39') {
@@ -172,12 +183,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const isGrid = pageSet && pageSet.gridType !== 'free';
+        const gridConfig = isGrid ? getGridConfig(pageSet.gridType) : null;
+
         let limit = Infinity;
-        if (pageSet) {
-            if (pageSet.gridType === 'grid-12') limit = 12;
-            else if (pageSet.gridType === 'grid-24') limit = 24;
-            else if (pageSet.gridType === 'grid-8') limit = 8;
-            else if (pageSet.gridType === 'grid-14') limit = 14;
+        if (gridConfig) {
+            limit = gridConfig.cols * gridConfig.rows;
         }
         const currentCount = barcodes.filter(b => b.page === finalPage).length;
         if (currentCount >= limit) {
@@ -187,10 +198,36 @@ document.addEventListener('DOMContentLoaded', () => {
         barcodeIdCounter++;
         const id = `bc_${Date.now()}_${barcodeIdCounter}`;
 
-        // Positionnement en cascade, centrage horizontal de la carte par défaut
-        const count = barcodes.filter(b => b.page === finalPage).length;
-        const finalLeft = leftPercent !== null ? leftPercent : (100 - cardWPct) / 2; // Parfaitement centré par défaut
-        const finalTop = topPercent !== null ? topPercent : (15 + (count * 12) % 50);
+        let finalWPct = cardWPct;
+        let finalHPct = cardHPct;
+        let finalLeft = leftPercent;
+        let finalTop = topPercent;
+
+        if (isGrid && gridConfig) {
+            // Dans un gabarit de grille, chaque carte prend exactement la dimension de la cellule
+            finalWPct = gridConfig.wPct;
+            finalHPct = gridConfig.hPct;
+            if (finalLeft === null || finalTop === null) {
+                const col = currentCount % gridConfig.cols;
+                const row = Math.floor(currentCount / gridConfig.cols);
+                finalLeft = col * gridConfig.wPct;
+                finalTop = row * gridConfig.hPct;
+            } else {
+                // S'assurer que le positionnement existant s'aligne bien sur les cellules
+                const col = Math.max(0, Math.min(gridConfig.cols - 1, Math.round(finalLeft / gridConfig.wPct)));
+                const row = Math.max(0, Math.min(gridConfig.rows - 1, Math.round(finalTop / gridConfig.hPct)));
+                finalLeft = col * gridConfig.wPct;
+                finalTop = row * gridConfig.hPct;
+            }
+        } else {
+            // Positionnement en cascade, centrage horizontal de la carte par défaut
+            if (finalLeft === null) {
+                finalLeft = (100 - finalWPct) / 2;
+            }
+            if (finalTop === null) {
+                finalTop = 15 + (currentCount * 12) % 50;
+            }
+        }
 
         let finalTitle = title;
         if (!finalTitle && leftPercent === null && !isDateOnly) {
@@ -206,8 +243,8 @@ document.addEventListener('DOMContentLoaded', () => {
             id,
             value: isDateOnly ? value : (format === 'CODE39' ? value.toUpperCase() : value),
             format,
-            cardWidthPercent: cardWPct,
-            cardHeightPercent: cardHPct,
+            cardWidthPercent: finalWPct,
+            cardHeightPercent: finalHPct,
             height,
             width,
             displayValue,
@@ -249,10 +286,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getGridConfig(gridType) {
         const configs = {
-            'grid-12': { cols: 2, rows: 6, wPct: 50, hPct: 16.6666 },
-            'grid-24': { cols: 3, rows: 8, wPct: 33.3333, hPct: 12.5 },
+            'grid-12': { cols: 2, rows: 6, wPct: 50, hPct: 100 / 6 },
+            'grid-24': { cols: 3, rows: 8, wPct: 100 / 3, hPct: 12.5 },
             'grid-8': { cols: 2, rows: 4, wPct: 50, hPct: 25 },
-            'grid-14': { cols: 2, rows: 7, wPct: 50, hPct: 14.2857 }
+            'grid-14': { cols: 2, rows: 7, wPct: 50, hPct: 100 / 7 }
         };
         return configs[gridType] || null;
     }
@@ -278,26 +315,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Calculer les surcharges de disposition de grille si la page a des paramètres de grille
         const pageSet = getPageSettings(bc.page);
+        const isGrid = pageSet && pageSet.gridType !== 'free';
+        const gridConfig = isGrid ? getGridConfig(pageSet.gridType) : null;
+
         let left = bc.leftPercent;
         let top = bc.topPercent;
         let w = bc.cardWidthPercent;
         let h = bc.cardHeightPercent;
 
-        if (pageSet && pageSet.gridType !== 'free') {
-            const gridConfig = getGridConfig(pageSet.gridType);
-            if (gridConfig) {
-                // Trouver l'index de ce code-barres dans sa page
+        if (isGrid && gridConfig) {
+            w = gridConfig.wPct;
+            h = gridConfig.hPct;
+            bc.cardWidthPercent = w;
+            bc.cardHeightPercent = h;
+
+            if (left === null || left === undefined || top === null || top === undefined) {
                 const pageBarcodes = barcodes.filter(b => b.page === bc.page);
                 const idx = pageBarcodes.indexOf(bc);
-                if (idx !== -1) {
-                    const col = idx % gridConfig.cols;
-                    const row = Math.floor(idx / gridConfig.cols);
-                    left = col * gridConfig.wPct;
-                    top = row * gridConfig.hPct;
-                    w = gridConfig.wPct;
-                    h = gridConfig.hPct;
-                }
+                const col = idx !== -1 ? (idx % gridConfig.cols) : 0;
+                const row = idx !== -1 ? Math.floor(idx / gridConfig.cols) : 0;
+                left = col * gridConfig.wPct;
+                top = row * gridConfig.hPct;
+            } else {
+                const col = Math.max(0, Math.min(gridConfig.cols - 1, Math.round(left / gridConfig.wPct)));
+                const row = Math.max(0, Math.min(gridConfig.rows - 1, Math.round(top / gridConfig.hPct)));
+                left = col * gridConfig.wPct;
+                top = row * gridConfig.hPct;
             }
+            bc.leftPercent = left;
+            bc.topPercent = top;
         }
 
         card.style.left = `${left}%`;
@@ -396,13 +442,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 let newWidth = Math.max(110, startWidth + (moveEvent.clientX - startX));
                 let newHeight = Math.max(65, startHeight + (moveEvent.clientY - startY));
 
-                // Aligner sur la grille (aimantation)
-                const gridSpacing = 15;
-                newWidth = Math.round(newWidth / gridSpacing) * gridSpacing;
-                newHeight = Math.round(newHeight / gridSpacing) * gridSpacing;
-
                 let pctWidth = (newWidth / parentRect.width) * 100;
                 let pctHeight = (newHeight / parentRect.height) * 100;
+
+                // Aimantation douce à 50% ou 100% de la largeur
+                if (Math.abs(pctWidth - 50) < 2.5) pctWidth = 50;
+                if (Math.abs(pctWidth - 100) < 2.5) pctWidth = 100;
 
                 // S'assurer que la largeur et la hauteur de la carte ne dépassent pas les limites de la feuille
                 const maxAllowedWidthPct = 100 - bc.leftPercent;
@@ -502,6 +547,89 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================================================
+    // GUIDES D'AIMANTATION MAGNÉTIQUE (STYLE INSTAGRAM STORIES)
+    // ==========================================================================
+    let guideTimeoutV = null;
+    let guideTimeoutH = null;
+
+    function ensureSnapGuides() {
+        if (!printSheet) return;
+        if (!document.getElementById('guide-vertical')) {
+            const gv = document.createElement('div');
+            gv.id = 'guide-vertical';
+            gv.className = 'snap-guide-line snap-guide-v';
+            printSheet.appendChild(gv);
+        }
+        if (!document.getElementById('guide-horizontal')) {
+            const gh = document.createElement('div');
+            gh.id = 'guide-horizontal';
+            gh.className = 'snap-guide-line snap-guide-h';
+            printSheet.appendChild(gh);
+        }
+    }
+
+    function showSnapGuide(dir, duration = null) {
+        ensureSnapGuides();
+        if (dir === 'v' || dir === 'both') {
+            const guideV = document.getElementById('guide-vertical');
+            if (guideV) {
+                if (guideTimeoutV) clearTimeout(guideTimeoutV);
+                guideV.classList.add('visible');
+                if (duration) {
+                    guideTimeoutV = setTimeout(() => {
+                        guideV.classList.remove('visible');
+                        guideTimeoutV = null;
+                    }, duration);
+                }
+            }
+        }
+        if (dir === 'h' || dir === 'both') {
+            const guideH = document.getElementById('guide-horizontal');
+            if (guideH) {
+                if (guideTimeoutH) clearTimeout(guideTimeoutH);
+                guideH.classList.add('visible');
+                if (duration) {
+                    guideTimeoutH = setTimeout(() => {
+                        guideH.classList.remove('visible');
+                        guideTimeoutH = null;
+                    }, duration);
+                }
+            }
+        }
+    }
+
+    function hideSnapGuide(dir, delay = 0) {
+        if (dir === 'v' || dir === 'both') {
+            const guideV = document.getElementById('guide-vertical');
+            if (guideV) {
+                if (guideTimeoutV) clearTimeout(guideTimeoutV);
+                if (delay > 0) {
+                    guideTimeoutV = setTimeout(() => {
+                        guideV.classList.remove('visible');
+                        guideTimeoutV = null;
+                    }, delay);
+                } else {
+                    guideV.classList.remove('visible');
+                }
+            }
+        }
+        if (dir === 'h' || dir === 'both') {
+            const guideH = document.getElementById('guide-horizontal');
+            if (guideH) {
+                if (guideTimeoutH) clearTimeout(guideTimeoutH);
+                if (delay > 0) {
+                    guideTimeoutH = setTimeout(() => {
+                        guideH.classList.remove('visible');
+                        guideTimeoutH = null;
+                    }, delay);
+                } else {
+                    guideH.classList.remove('visible');
+                }
+            }
+        }
+    }
+
+    // ==========================================================================
     // LOGIQUE DE MOUVEMENT GLISSER-DÉPOSER (POSITIONNEMENT EN POURCENTAGE)
     // ==========================================================================
     function initDragAndDrop(element) {
@@ -560,37 +688,92 @@ document.addEventListener('DOMContentLoaded', () => {
             let newLeft = initialLeft + dx;
             let newTop = initialTop + dy;
 
-            const maxLeft = parentRect.width - element.offsetWidth;
-            const maxTop = parentRect.height - element.offsetHeight;
+            const maxLeft = Math.max(0, parentRect.width - element.offsetWidth);
+            const maxTop = Math.max(0, parentRect.height - element.offsetHeight);
 
-            // Snap coordinates relative to current grid spacing (starting at 0 for every edge)
-            const gridSpacing = 15;
-            const snapTolerance = 25; // Tolérance plus grande pour les bords de la feuille
+            const pageSet = getPageSettings(activePage);
+            const isGrid = pageSet && pageSet.gridType !== 'free';
+            const gridConfig = isGrid ? getGridConfig(pageSet.gridType) : null;
+            const bc = barcodes.find(b => b.id === element.dataset.id);
 
-            // Appliquer une tolérance d'aimantation des bords pour assurer un alignement parfait aux limites
-            if (newLeft < snapTolerance) {
-                newLeft = 0;
-            } else if (newLeft > maxLeft - snapTolerance) {
-                newLeft = maxLeft;
+            let pctLeft, pctTop;
+
+            if (isGrid && gridConfig) {
+                // Aimantation magnétique sur les cellules du gabarit de grille
+                const colWidthPx = parentRect.width / gridConfig.cols;
+                const rowHeightPx = parentRect.height / gridConfig.rows;
+
+                let col = Math.round(newLeft / colWidthPx);
+                let row = Math.round(newTop / rowHeightPx);
+
+                col = Math.max(0, Math.min(gridConfig.cols - 1, col));
+                row = Math.max(0, Math.min(gridConfig.rows - 1, row));
+
+                pctLeft = col * gridConfig.wPct;
+                pctTop = row * gridConfig.hPct;
+
+                if (bc) {
+                    bc.cardWidthPercent = gridConfig.wPct;
+                    bc.cardHeightPercent = gridConfig.hPct;
+                }
+                element.style.width = `${gridConfig.wPct}%`;
+                element.style.height = `${gridConfig.hPct}%`;
+
+                // Détection de l'alignement sur l'axe central
+                if (Math.abs(pctLeft - 50) < 0.5 || Math.abs((col + 1) * gridConfig.wPct - 50) < 0.5) {
+                    showSnapGuide('v');
+                } else {
+                    hideSnapGuide('v', 120);
+                }
             } else {
-                newLeft = Math.round(newLeft / gridSpacing) * gridSpacing;
-            }
+                // Disposition libre : Aimantation magnétique au centre exact et aux bordures
+                const centerLeft = (parentRect.width - element.offsetWidth) / 2;
+                const centerTop = (parentRect.height - element.offsetHeight) / 2;
+                const centerTolerance = 14; // pixels de tolérance pour le centrage parfait
+                const edgeTolerance = 16;   // pixels de tolérance pour les bords
 
-            if (newTop < snapTolerance) {
-                newTop = 0;
-            } else if (newTop > maxTop - snapTolerance) {
-                newTop = maxTop;
-            } else {
-                newTop = Math.round(newTop / gridSpacing) * gridSpacing;
-            }
+                // Aimantation horizontale
+                if (Math.abs(newLeft - centerLeft) <= centerTolerance) {
+                    newLeft = centerLeft;
+                    pctLeft = bc ? (100 - bc.cardWidthPercent) / 2 : (centerLeft / parentRect.width) * 100;
+                    showSnapGuide('v'); // Affiche le trait central vertical (style Instagram)
+                } else if (newLeft < edgeTolerance) {
+                    newLeft = 0;
+                    pctLeft = 0;
+                    hideSnapGuide('v', 120);
+                } else if (newLeft > maxLeft - edgeTolerance) {
+                    newLeft = maxLeft;
+                    pctLeft = bc ? (100 - bc.cardWidthPercent) : (maxLeft / parentRect.width) * 100;
+                    hideSnapGuide('v', 120);
+                } else {
+                    newLeft = Math.max(0, Math.min(maxLeft, Math.round(newLeft / 2) * 2));
+                    pctLeft = (newLeft / parentRect.width) * 100;
+                    hideSnapGuide('v', 120);
+                }
 
-            const pctLeft = (newLeft / parentRect.width) * 100;
-            const pctTop = (newTop / parentRect.height) * 100;
+                // Aimantation verticale
+                if (Math.abs(newTop - centerTop) <= centerTolerance) {
+                    newTop = centerTop;
+                    pctTop = bc ? (100 - bc.cardHeightPercent) / 2 : (centerTop / parentRect.height) * 100;
+                    showSnapGuide('h'); // Affiche le trait central horizontal
+                } else if (newTop < edgeTolerance) {
+                    newTop = 0;
+                    pctTop = 0;
+                    hideSnapGuide('h', 120);
+                } else if (newTop > maxTop - edgeTolerance) {
+                    newTop = maxTop;
+                    pctTop = bc ? (100 - bc.cardHeightPercent) : (maxTop / parentRect.height) * 100;
+                    hideSnapGuide('h', 120);
+                } else {
+                    newTop = Math.max(0, Math.min(maxTop, Math.round(newTop / 2) * 2));
+                    pctTop = (newTop / parentRect.height) * 100;
+                    hideSnapGuide('h', 120);
+                }
+            }
 
             element.style.left = `${pctLeft}%`;
             element.style.top = `${pctTop}%`;
 
-            const bc = barcodes.find(b => b.id === element.dataset.id);
             if (bc) {
                 bc.leftPercent = pctLeft;
                 bc.topPercent = pctTop;
@@ -609,6 +792,10 @@ document.addEventListener('DOMContentLoaded', () => {
             document.removeEventListener('touchmove', dragMove);
             document.removeEventListener('mouseup', dragEnd);
             document.removeEventListener('touchend', dragEnd);
+
+            // Laisser le trait visible ~500ms après relâchement pour donner le retour visuel (style Instagram Story)
+            hideSnapGuide('both', 500);
+
             saveState();
         }
     }
@@ -642,6 +829,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ==========================================================================
+    // EFFET VISUEL D'ENFONCEMENT DE LA TOUCHE CLAVIER
+    // ==========================================================================
+    function triggerKeyVisualFeedback(btn) {
+        if (!btn) return;
+        btn.classList.add('key-pressed');
+        setTimeout(() => {
+            btn.classList.remove('key-pressed');
+        }, 150);
+    }
+
     function showCustomConfirm(title, message) {
         return new Promise((resolve) => {
             const modal = document.getElementById('confirm-modal');
@@ -671,16 +869,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 resolve(false);
             };
 
+            const handleBackdropClick = (e) => {
+                if (e.target === modal) {
+                    handleCancel();
+                }
+            };
+
             const cleanup = () => {
                 modal.classList.add('hidden');
                 btnConfirm.removeEventListener('click', handleConfirm);
                 btnCancel.removeEventListener('click', handleCancel);
                 btnClose.removeEventListener('click', handleCancel);
+                modal.removeEventListener('mousedown', handleBackdropClick);
             };
 
             btnConfirm.addEventListener('click', handleConfirm);
             btnCancel.addEventListener('click', handleCancel);
             btnClose.addEventListener('click', handleCancel);
+            modal.addEventListener('mousedown', handleBackdropClick);
         });
     }
 
@@ -702,8 +908,8 @@ document.addEventListener('DOMContentLoaded', () => {
             titleEl.textContent = title;
             messageEl.textContent = message;
 
-            const originalConfirmText = btnConfirm.textContent;
-            btnConfirm.textContent = "OK";
+            const originalConfirmHtml = btnConfirm.innerHTML;
+            btnConfirm.innerHTML = 'OK <kbd class="kbd-key">Entrée</kbd>';
             const originalCancelDisplay = btnCancel.style.display;
             btnCancel.style.display = 'none';
 
@@ -711,18 +917,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const handleClose = () => {
                 modal.classList.add('hidden');
-                btnConfirm.textContent = originalConfirmText;
+                btnConfirm.innerHTML = originalConfirmHtml;
                 btnCancel.style.display = originalCancelDisplay;
 
                 btnConfirm.removeEventListener('click', handleClose);
                 btnCancel.removeEventListener('click', handleClose);
                 btnClose.removeEventListener('click', handleClose);
+                modal.removeEventListener('mousedown', handleBackdropClick);
                 resolve();
+            };
+
+            const handleBackdropClick = (e) => {
+                if (e.target === modal) {
+                    handleClose();
+                }
             };
 
             btnConfirm.addEventListener('click', handleClose);
             btnCancel.addEventListener('click', handleClose);
             btnClose.addEventListener('click', handleClose);
+            modal.addEventListener('mousedown', handleBackdropClick);
         });
     }
 
@@ -1232,15 +1446,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else {
             contextMenuTargetId = null;
+            const pageSet = getPageSettings(activePage);
+            const isFleg = pageSet && pageSet.isDateMode;
             const pageBarcodesCount = barcodes.filter(bc => bc.page === activePage).length;
             const isPageEmpty = (pageBarcodesCount === 0);
 
             contextMenu.innerHTML = `
                 <ul>
+                    ${!isFleg ? `
                     <li onclick="window.triggerFocusInput()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                         Nouveau code-barres
                     </li>
+                    ` : ''}
                     <li onclick="window.triggerPrint()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                         Imprimer la page
@@ -1302,6 +1520,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('mousedown', (e) => {
         if (!contextMenu.contains(e.target)) {
             hideContextMenu();
+        }
+        if (!e.target.closest('#barcode-value-input') && !e.target.closest('.input-tooltip')) {
+            hideValueInputTooltip();
         }
     });
 
@@ -1487,21 +1708,56 @@ document.addEventListener('DOMContentLoaded', () => {
         if (contextMenuTargetId) {
             const bc = barcodes.find(b => b.id === contextMenuTargetId);
             if (bc && bc.element) {
-                if (type === 'center-h') {
-                    bc.leftPercent = (100 - bc.cardWidthPercent) / 2;
-                } else if (type === 'center-v') {
-                    bc.topPercent = (100 - bc.cardHeightPercent) / 2;
-                } else if (type === 'center-both') {
-                    bc.leftPercent = (100 - bc.cardWidthPercent) / 2;
-                    bc.topPercent = (100 - bc.cardHeightPercent) / 2;
-                } else if (type === 'left') {
-                    bc.leftPercent = 0;
-                } else if (type === 'right') {
-                    bc.leftPercent = 100 - bc.cardWidthPercent;
-                } else if (type === 'top') {
-                    bc.topPercent = 0;
-                } else if (type === 'bottom') {
-                    bc.topPercent = 100 - bc.cardHeightPercent;
+                const pageSet = getPageSettings(bc.page);
+                const isGrid = pageSet && pageSet.gridType !== 'free';
+                const gridConfig = isGrid ? getGridConfig(pageSet.gridType) : null;
+
+                if (isGrid && gridConfig) {
+                    // Alignement dans la grille : cibler la cellule active
+                    const currentCol = Math.max(0, Math.min(gridConfig.cols - 1, Math.round(bc.leftPercent / gridConfig.wPct)));
+                    const currentRow = Math.max(0, Math.min(gridConfig.rows - 1, Math.round(bc.topPercent / gridConfig.hPct)));
+
+                    bc.cardWidthPercent = gridConfig.wPct;
+                    bc.cardHeightPercent = gridConfig.hPct;
+                    bc.element.style.width = `${gridConfig.wPct}%`;
+                    bc.element.style.height = `${gridConfig.hPct}%`;
+
+                    const cellLeft = currentCol * gridConfig.wPct;
+                    const cellTop = currentRow * gridConfig.hPct;
+
+                    if (type === 'center-h' || type === 'left') {
+                        bc.leftPercent = cellLeft;
+                    } else if (type === 'right') {
+                        bc.leftPercent = cellLeft + (gridConfig.wPct - bc.cardWidthPercent);
+                    } else if (type === 'center-v' || type === 'top') {
+                        bc.topPercent = cellTop;
+                    } else if (type === 'bottom') {
+                        bc.topPercent = cellTop + (gridConfig.hPct - bc.cardHeightPercent);
+                    } else if (type === 'center-both') {
+                        bc.leftPercent = cellLeft;
+                        bc.topPercent = cellTop;
+                    }
+                } else {
+                    // Disposition libre : alignement sur la feuille entière
+                    if (type === 'center-h') {
+                        bc.leftPercent = (100 - bc.cardWidthPercent) / 2;
+                        showSnapGuide('v', 500);
+                    } else if (type === 'center-v') {
+                        bc.topPercent = (100 - bc.cardHeightPercent) / 2;
+                        showSnapGuide('h', 500);
+                    } else if (type === 'center-both') {
+                        bc.leftPercent = (100 - bc.cardWidthPercent) / 2;
+                        bc.topPercent = (100 - bc.cardHeightPercent) / 2;
+                        showSnapGuide('both', 500);
+                    } else if (type === 'left') {
+                        bc.leftPercent = 0;
+                    } else if (type === 'right') {
+                        bc.leftPercent = 100 - bc.cardWidthPercent;
+                    } else if (type === 'top') {
+                        bc.topPercent = 0;
+                    } else if (type === 'bottom') {
+                        bc.topPercent = 100 - bc.cardHeightPercent;
+                    }
                 }
 
                 bc.element.style.left = `${bc.leftPercent}%`;
@@ -1551,22 +1807,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function showValueInputTooltip() {
-        if (currentTooltip) {
-            currentTooltip.remove();
-            currentTooltip = null;
-        }
-        if (tooltipTimeout) {
-            clearTimeout(tooltipTimeout);
-            tooltipTimeout = null;
-        }
+        hideValueInputTooltip();
 
         const tooltip = document.createElement('div');
         tooltip.className = 'input-tooltip';
         tooltip.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 14px; height: 14px; margin-right: 4px;">
-                <line x1="19" y1="12" x2="5" y2="12"></line>
-                <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
+            <i class="fas fa-angle-left" style="margin-right: 6px; font-size: 14px;"></i>
             Placer ici le code
         `;
 
@@ -1578,18 +1824,16 @@ document.addEventListener('DOMContentLoaded', () => {
         tooltip.style.top = `${rect.top + rect.height / 2}px`;
 
         tooltipTimeout = setTimeout(() => {
-            tooltip.style.opacity = '0';
-            tooltip.style.transform = 'translateY(-50%) translateX(8px)';
-            tooltipTimeout = setTimeout(() => {
-                tooltip.remove();
-                if (currentTooltip === tooltip) {
-                    currentTooltip = null;
-                }
-            }, 300);
+            hideValueInputTooltip();
         }, 5000);
     }
 
     window.triggerFocusInput = () => {
+        const pageSet = getPageSettings(activePage);
+        if (pageSet && pageSet.isDateMode) {
+            hideContextMenu();
+            return;
+        }
         valueInput.focus();
         showValueInputTooltip();
         hideContextMenu();
@@ -1690,6 +1934,124 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
         }
     }, { passive: false });
+
+    // ==========================================================================
+    // RACCOURCIS CLAVIER UNIFIÉS POUR LES BOÎTES MODALES (ENTRÉE & ÉCHAP)
+    // ==========================================================================
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== 'Escape') return;
+
+        const confirmModal = document.getElementById('confirm-modal');
+        const renameModal = document.getElementById('rename-page-modal');
+        const printModal = document.getElementById('print-modal');
+        const titleModal = document.getElementById('title-modal');
+        const helpModal = document.getElementById('help-modal');
+
+        let activeModalType = null;
+        if (confirmModal && !confirmModal.classList.contains('hidden')) {
+            activeModalType = 'confirm';
+        } else if (renameModal && !renameModal.classList.contains('hidden')) {
+            activeModalType = 'rename';
+        } else if (printModal && !printModal.classList.contains('hidden')) {
+            activeModalType = 'print';
+        } else if (titleModal && !titleModal.classList.contains('hidden')) {
+            activeModalType = 'title';
+        } else if (helpModal && !helpModal.classList.contains('hidden')) {
+            activeModalType = 'help';
+        }
+
+        if (!activeModalType) return;
+
+        // Touche Échap -> Annuler ou Fermer
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (activeModalType === 'confirm') {
+                const btnCancel = document.getElementById('btn-cancel-confirm-modal');
+                const btnConfirm = document.getElementById('btn-save-confirm-modal');
+                if (btnCancel && btnCancel.style.display !== 'none') {
+                    triggerKeyVisualFeedback(btnCancel);
+                    btnCancel.click();
+                } else if (btnConfirm) {
+                    triggerKeyVisualFeedback(btnConfirm);
+                    btnConfirm.click();
+                }
+            } else if (activeModalType === 'rename') {
+                const btnCancel = document.getElementById('btn-cancel-rename-page-modal');
+                if (btnCancel) {
+                    triggerKeyVisualFeedback(btnCancel);
+                    btnCancel.click();
+                }
+            } else if (activeModalType === 'print') {
+                const btnCancel = document.getElementById('btn-cancel-print-modal');
+                if (btnCancel) {
+                    triggerKeyVisualFeedback(btnCancel);
+                    btnCancel.click();
+                }
+            } else if (activeModalType === 'title') {
+                const btnCancel = document.getElementById('btn-cancel-title-modal');
+                if (btnCancel) {
+                    triggerKeyVisualFeedback(btnCancel);
+                    btnCancel.click();
+                }
+            } else if (activeModalType === 'help') {
+                const btnClose = document.getElementById('btn-close-help-modal') || document.getElementById('btn-close-help-ok');
+                if (btnClose) btnClose.click();
+            }
+            return;
+        }
+
+        // Touche Entrée -> Valider ou Confirmer ou Lancer l'impression
+        if (e.key === 'Enter') {
+            const activeEl = document.activeElement;
+            // Laisser le clic natif si le focus est sur un bouton secondaire ou de fermeture
+            if (activeEl && (
+                activeEl.id === 'btn-cancel-confirm-modal' ||
+                activeEl.id === 'btn-cancel-rename-page-modal' ||
+                activeEl.id === 'btn-cancel-print-modal' ||
+                activeEl.id === 'btn-cancel-title-modal' ||
+                activeEl.classList.contains('btn-close-modal') ||
+                activeEl.classList.contains('btn-close-drawer')
+            )) {
+                return;
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (activeModalType === 'confirm') {
+                const btnConfirm = document.getElementById('btn-save-confirm-modal');
+                if (btnConfirm) {
+                    triggerKeyVisualFeedback(btnConfirm);
+                    btnConfirm.click();
+                }
+            } else if (activeModalType === 'rename') {
+                const btnSave = document.getElementById('btn-save-rename-page-modal');
+                if (btnSave) {
+                    triggerKeyVisualFeedback(btnSave);
+                    btnSave.click();
+                }
+            } else if (activeModalType === 'print') {
+                const btnConfirmPrint = document.getElementById('btn-confirm-print');
+                if (btnConfirmPrint && !btnConfirmPrint.disabled) {
+                    triggerKeyVisualFeedback(btnConfirmPrint);
+                    btnConfirmPrint.click();
+                } else if (btnConfirmPrint) {
+                    triggerKeyVisualFeedback(btnConfirmPrint);
+                }
+            } else if (activeModalType === 'title') {
+                const btnSave = document.getElementById('btn-save-title-modal');
+                if (btnSave) {
+                    triggerKeyVisualFeedback(btnSave);
+                    btnSave.click();
+                }
+            } else if (activeModalType === 'help') {
+                const btnCloseOk = document.getElementById('btn-close-help-ok');
+                if (btnCloseOk) btnCloseOk.click();
+            }
+        }
+    }, true);
 
     document.addEventListener('keydown', (e) => {
         // Ignorer si l'utilisateur est actuellement dans un champ de saisie ou modifiable
@@ -1874,11 +2236,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Icône de statut de l'onglet (Mode date / FLEG)
             if (pageSet && pageSet.isDateMode) {
-                const flegIcon = document.createElement('span');
+                const flegIcon = document.createElement('i');
+                flegIcon.className = 'fas fa-seedling';
+                flegIcon.style.color = '#059669';
                 flegIcon.style.fontSize = '12px';
                 flegIcon.style.lineHeight = '1';
-                flegIcon.style.display = 'block';
-                flegIcon.textContent = '🥬';
+                flegIcon.style.display = 'inline-block';
                 tab.appendChild(flegIcon);
             }
 
@@ -1892,12 +2255,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (i > 1) {
                 const delBtn = document.createElement('span');
                 delBtn.className = 'workspace-tab-delete';
-                delBtn.innerHTML = `
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width: 10px; height: 10px; display: block;">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                `;
+                delBtn.innerHTML = `<i class="fas fa-times"></i>`;
                 delBtn.addEventListener('mouseenter', () => showDeleteBtnTooltip(delBtn, i));
                 delBtn.addEventListener('mouseleave', hideDeleteBtnTooltip);
                 delBtn.addEventListener('click', (e) => {
@@ -2088,6 +2446,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnClosePrintModal) btnClosePrintModal.addEventListener('click', closePrintModal);
     if (btnCancelPrintModal) btnCancelPrintModal.addEventListener('click', closePrintModal);
+    if (printModal) {
+        printModal.addEventListener('mousedown', (e) => {
+            if (e.target === printModal) {
+                closePrintModal();
+            }
+        });
+    }
 
     if (btnSelectAllPages) {
         btnSelectAllPages.addEventListener('click', () => {
@@ -2162,14 +2527,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (pageSet && pageSet.gridType !== 'free') {
                     const gridConfig = getGridConfig(pageSet.gridType);
                     if (gridConfig) {
-                        const idx = pageBarcodes.indexOf(bc);
-                        if (idx !== -1) {
-                            const col = idx % gridConfig.cols;
-                            const row = Math.floor(idx / gridConfig.cols);
+                        w = gridConfig.wPct;
+                        h = gridConfig.hPct;
+                        if (left === null || left === undefined || top === null || top === undefined) {
+                            const idx = pageBarcodes.indexOf(bc);
+                            const col = idx !== -1 ? (idx % gridConfig.cols) : 0;
+                            const row = idx !== -1 ? Math.floor(idx / gridConfig.cols) : 0;
                             left = col * gridConfig.wPct;
                             top = row * gridConfig.hPct;
-                            w = gridConfig.wPct;
-                            h = gridConfig.hPct;
+                        } else {
+                            const col = Math.max(0, Math.min(gridConfig.cols - 1, Math.round(left / gridConfig.wPct)));
+                            const row = Math.max(0, Math.min(gridConfig.rows - 1, Math.round(top / gridConfig.hPct)));
+                            left = col * gridConfig.wPct;
+                            top = row * gridConfig.hPct;
                         }
                     }
                 }
@@ -2343,12 +2713,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 pageSet.isDateMode = false;
             }
 
-            // Limiter les codes-barres à la capacité de la nouvelle grille pour éviter les débordements !
-            let limit = Infinity;
-            if (pageSet.gridType === 'grid-12') limit = 12;
-            else if (pageSet.gridType === 'grid-24') limit = 24;
-            else if (pageSet.gridType === 'grid-8') limit = 8;
-            else if (pageSet.gridType === 'grid-14') limit = 14;
+            const isGrid = pageSet.gridType !== 'free';
+            const gridConfig = isGrid ? getGridConfig(pageSet.gridType) : null;
+            let limit = gridConfig ? gridConfig.cols * gridConfig.rows : Infinity;
 
             const pageBarcodes = barcodes.filter(bc => bc.page === activePage);
             if (pageBarcodes.length > limit) {
@@ -2362,6 +2729,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Mettre à jour le tableau global des codes-barres
                 barcodes = barcodes.filter(bc => bc.page !== activePage || toKeep.includes(bc));
+            }
+
+            if (isGrid && gridConfig) {
+                // Adapter la taille et replacer les codes-barres sur les cellules de la nouvelle grille
+                const currentBarcodes = barcodes.filter(bc => bc.page === activePage);
+                currentBarcodes.forEach((bc, idx) => {
+                    const col = idx % gridConfig.cols;
+                    const row = Math.floor(idx / gridConfig.cols);
+                    bc.cardWidthPercent = gridConfig.wPct;
+                    bc.cardHeightPercent = gridConfig.hPct;
+                    bc.leftPercent = col * gridConfig.wPct;
+                    bc.topPercent = row * gridConfig.hPct;
+                });
             }
 
             applyPageSettingsToUI();

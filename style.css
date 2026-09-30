@@ -21,7 +21,7 @@
     /* Accent rouge de la marque Auchan */
     --primary-hover: #b21207;
     /* État rouge au survol */
-    --primary-light: rgba(214, 24, 11, 0.06);
+    --primary-light: rgb(214 24 11 / 20%);
 
     --text-dark: #1f2937;
     /* Gris foncé pour les titres et les textes principaux */
@@ -305,14 +305,12 @@ input[type="text"]:focus,
 }
 
 .btn-secondary {
-    background-color: #f9fafb;
+    background-color: transparent;
     color: var(--text-muted);
-    border: 2px solid var(--border-color);
 }
 
 .btn-secondary:hover {
     background-color: #cfcfcf;
-    border-color: #a1a1a1;
 }
 
 .btn-large {
@@ -377,50 +375,106 @@ input[type="text"]:focus,
     position: absolute;
     inset: 0;
     pointer-events: none;
-    border: 1px dashed rgba(0, 0, 0, 0.12);
     z-index: 1;
-    /* derrière les codes-barres mais au-dessus de l'indicateur d'emplacement */
     border-radius: inherit;
+    box-sizing: border-box;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
 }
 
+/* Modèle 12 étiquettes (2 colonnes, 6 lignes - 105x49 mm) */
 .print-sheet.template-grid-12::before {
     background-image:
-        linear-gradient(to right, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px),
-        linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px);
-    background-size: 50% 16.6666%;
-    /* 2 colonnes, 6 lignes */
+        linear-gradient(to right, transparent calc(50% - 0.5px), rgba(0, 0, 0, 0.12) calc(50% - 0.5px), rgba(0, 0, 0, 0.12) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+        linear-gradient(to bottom,
+            transparent calc(100% / 6 * 1 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 6 * 1 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 6 * 1 + 0.5px), transparent calc(100% / 6 * 1 + 0.5px),
+            transparent calc(100% / 6 * 2 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 6 * 2 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 6 * 2 + 0.5px), transparent calc(100% / 6 * 2 + 0.5px),
+            transparent calc(100% / 6 * 3 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 6 * 3 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 6 * 3 + 0.5px), transparent calc(100% / 6 * 3 + 0.5px),
+            transparent calc(100% / 6 * 4 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 6 * 4 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 6 * 4 + 0.5px), transparent calc(100% / 6 * 4 + 0.5px),
+            transparent calc(100% / 6 * 5 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 6 * 5 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 6 * 5 + 0.5px), transparent calc(100% / 6 * 5 + 0.5px));
 }
 
+/* Modèle 24 étiquettes (3 colonnes, 8 lignes - 70x37 mm) */
 .print-sheet.template-grid-24::before {
     background-image:
-        linear-gradient(to right, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px),
-        linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px);
-    background-size: 33.3333% 12.5%;
-    /* 3 colonnes, 8 lignes */
+        linear-gradient(to right,
+            transparent calc(100% / 3 * 1 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 3 * 1 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 3 * 1 + 0.5px), transparent calc(100% / 3 * 1 + 0.5px),
+            transparent calc(100% / 3 * 2 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 3 * 2 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 3 * 2 + 0.5px), transparent calc(100% / 3 * 2 + 0.5px)),
+        linear-gradient(to bottom,
+            transparent calc(100% / 8 * 1 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 8 * 1 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 8 * 1 + 0.5px), transparent calc(100% / 8 * 1 + 0.5px),
+            transparent calc(100% / 8 * 2 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 8 * 2 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 8 * 2 + 0.5px), transparent calc(100% / 8 * 2 + 0.5px),
+            transparent calc(100% / 8 * 3 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 8 * 3 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 8 * 3 + 0.5px), transparent calc(100% / 8 * 3 + 0.5px),
+            transparent calc(100% / 8 * 4 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 8 * 4 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 8 * 4 + 0.5px), transparent calc(100% / 8 * 4 + 0.5px),
+            transparent calc(100% / 8 * 5 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 8 * 5 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 8 * 5 + 0.5px), transparent calc(100% / 8 * 5 + 0.5px),
+            transparent calc(100% / 8 * 6 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 8 * 6 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 8 * 6 + 0.5px), transparent calc(100% / 8 * 6 + 0.5px),
+            transparent calc(100% / 8 * 7 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 8 * 7 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 8 * 7 + 0.5px), transparent calc(100% / 8 * 7 + 0.5px));
 }
 
+/* Modèle 8 étiquettes (2 colonnes, 4 lignes - 105x74 mm) */
 .print-sheet.template-grid-8::before {
     background-image:
-        linear-gradient(to right, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px),
-        linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px);
-    background-size: 50% 25%;
-    /* 2 colonnes, 4 lignes */
+        linear-gradient(to right, transparent calc(50% - 0.5px), rgba(0, 0, 0, 0.12) calc(50% - 0.5px), rgba(0, 0, 0, 0.12) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+        linear-gradient(to bottom,
+            transparent calc(25% - 0.5px), rgba(0, 0, 0, 0.12) calc(25% - 0.5px), rgba(0, 0, 0, 0.12) calc(25% + 0.5px), transparent calc(25% + 0.5px),
+            transparent calc(50% - 0.5px), rgba(0, 0, 0, 0.12) calc(50% - 0.5px), rgba(0, 0, 0, 0.12) calc(50% + 0.5px), transparent calc(50% + 0.5px),
+            transparent calc(75% - 0.5px), rgba(0, 0, 0, 0.12) calc(75% - 0.5px), rgba(0, 0, 0, 0.12) calc(75% + 0.5px), transparent calc(75% + 0.5px));
 }
 
+/* Modèle 14 étiquettes (2 colonnes, 7 lignes - 7x2 FLEG) */
 .print-sheet.template-grid-14::before {
     background-image:
-        linear-gradient(to right, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px),
-        linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px);
-    background-size: 50% 14.2857%;
-    /* 2 colonnes, 7 lignes */
+        linear-gradient(to right, transparent calc(50% - 0.5px), rgba(0, 0, 0, 0.12) calc(50% - 0.5px), rgba(0, 0, 0, 0.12) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+        linear-gradient(to bottom,
+            transparent calc(100% / 7 * 1 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 7 * 1 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 7 * 1 + 0.5px), transparent calc(100% / 7 * 1 + 0.5px),
+            transparent calc(100% / 7 * 2 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 7 * 2 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 7 * 2 + 0.5px), transparent calc(100% / 7 * 2 + 0.5px),
+            transparent calc(100% / 7 * 3 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 7 * 3 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 7 * 3 + 0.5px), transparent calc(100% / 7 * 3 + 0.5px),
+            transparent calc(100% / 7 * 4 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 7 * 4 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 7 * 4 + 0.5px), transparent calc(100% / 7 * 4 + 0.5px),
+            transparent calc(100% / 7 * 5 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 7 * 5 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 7 * 5 + 0.5px), transparent calc(100% / 7 * 5 + 0.5px),
+            transparent calc(100% / 7 * 6 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 7 * 6 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 7 * 6 + 0.5px), transparent calc(100% / 7 * 6 + 0.5px));
 }
 
 /* Masquer les repères de grille lors de l'impression */
 @media print {
-    #print-output-container .print-sheet::before {
+
+    #print-output-container .print-sheet::before,
+    .snap-guide-line {
         display: none !important;
         background-image: none !important;
     }
+}
+
+/* ==========================================================================
+   LIGNES DE GUIDAGE D'AIMANTATION AU CENTRE (STYLE INSTAGRAM STORIES)
+   ========================================================================== */
+.snap-guide-line {
+    position: absolute;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.snap-guide-line.visible {
+    opacity: 1;
+    transition: opacity 0.05s ease-out;
+}
+
+.snap-guide-v {
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    background: rgba(0, 0, 0, 0.12);
+    transform: translateX(-50%);
+}
+
+.snap-guide-h {
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 2px;
+    background: rgba(0, 0, 0, 0.12);
+    transform: translateY(-50%);
 }
 
 
@@ -555,14 +609,13 @@ body.dragging-active * {
     letter-spacing: -0.02em;
 }
 
-/* Désactiver le curseur de glissement et masquer les poignées de redimensionnement en mode grille */
+/* Masquer les poignées de redimensionnement en mode grille et conserver le curseur de déplacement */
 .print-sheet.template-grid-12 .draggable-barcode,
 .print-sheet.template-grid-24 .draggable-barcode,
 .print-sheet.template-grid-8 .draggable-barcode,
 .print-sheet.template-grid-14 .draggable-barcode {
-    cursor: default !important;
-    border-radius: 4px !important;
-    /* bordures de cartes s'adaptant à l'aimantation */
+    cursor: grab;
+    border-radius: 4px;
 }
 
 .print-sheet.template-grid-12 .barcode-resize-handle,
@@ -677,12 +730,17 @@ body.dragging-active * {
     font-weight: 600;
     border-radius: 5px;
     color: var(--text-dark);
+    margin-bottom: 3px;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 8px;
     position: relative;
     transition: var(--transition);
+}
+
+.custom-context-menu li:last-child {
+    margin-bottom: 0 !important;
 }
 
 .custom-context-menu li svg {
@@ -918,6 +976,39 @@ body.dragging-active * {
     justify-content: flex-end;
     gap: 10px;
     margin-top: 8px;
+}
+
+/* Badge de raccourci clavier à côté du texte du bouton */
+.kbd-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-size: 0.70rem;
+    font-weight: 600;
+    line-height: 1;
+    padding: 4px 6px;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+/* Badge dans les boutons secondaires (Annuler) */
+.btn-secondary .kbd-key {
+    background: #e5e7eb;
+    color: #4b5563;
+    border: 1px solid #90959f;
+    border-bottom: 3px solid #90959f !important;
+    border-right: 3px solid #90959f !important;
+}
+
+/* Badge dans les boutons primaires (Valider / Confirmer / Impression) */
+.btn-primary .kbd-key,
+.btn-danger-action .kbd-key {
+    background: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+    border-bottom: 3px solid rgba(255, 255, 255, 60%) !important;
+    border-right: 3px solid rgba(255, 255, 255, 60%) !important;
+    border: 1px solid rgba(255, 255, 255, 60%);
 }
 
 /* Bouton d'aide flottant */
@@ -1364,6 +1455,8 @@ body.dragging-active * {
     justify-content: center;
     width: 14px;
     height: 14px;
+    font-size: 11px;
+    line-height: 1;
     border-radius: 50%;
     background-color: transparent;
     color: var(--text-muted);

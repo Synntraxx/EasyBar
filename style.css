@@ -330,6 +330,23 @@ input[type="text"]:focus,
     border-top: 2px solid var(--border-color);
 }
 
+.sidebar-about-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-light);
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+}
+
+.sidebar-about-link:hover {
+    color: var(--text-dark);
+}
+
 /* ==========================================================================
    ESPACE DE TRAVAIL CENTRAL ET FEUILLE D'IMPRESSION A4
    ========================================================================== */

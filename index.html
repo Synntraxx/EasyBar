@@ -13,6 +13,8 @@
         rel="stylesheet">
     <!-- Feuille de style CSS -->
     <link rel="stylesheet" href="style.css">
+    <!-- Font Awesome pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Favicone -->
     <link rel="icon" type="image/png" href="icon.png">
     <!-- Dépendance de la bibliothèque JsBarcode via CDN -->
@@ -151,6 +153,9 @@
         <main class="workspace-area">
             <div class="sheet-viewport">
                 <div id="print-sheet" class="print-sheet">
+                    <!-- Repères de centrage magnétique (style Instagram Story) -->
+                    <div id="guide-vertical" class="snap-guide-line snap-guide-v"></div>
+                    <div id="guide-horizontal" class="snap-guide-line snap-guide-h"></div>
                 </div>
             </div>
             <div class="workspace-tabs-container">
@@ -220,8 +225,8 @@
                 <input type="text" id="title-modal-input" placeholder="Aucun titre" maxlength="30">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="btn-cancel-title-modal">Annuler</button>
-                <button type="button" class="btn btn-primary" id="btn-save-title-modal">Valider</button>
+                <button type="button" class="btn btn-secondary" id="btn-cancel-title-modal">Annuler <kbd class="kbd-key">Échap</kbd></button>
+                <button type="button" class="btn btn-primary" id="btn-save-title-modal">Valider <kbd class="kbd-key">Entrée</kbd></button>
             </div>
         </div>
     </div>
@@ -250,8 +255,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="btn-cancel-print-modal">Annuler</button>
-                <button type="button" class="btn btn-primary" id="btn-confirm-print">Lancer l'impression</button>
+                <button type="button" class="btn btn-secondary" id="btn-cancel-print-modal">Annuler <kbd class="kbd-key">Échap</kbd></button>
+                <button type="button" class="btn btn-primary" id="btn-confirm-print">Lancer l'impression <kbd class="kbd-key">Entrée</kbd></button>
             </div>
         </div>
     </div>
@@ -267,9 +272,9 @@
                 <p id="confirm-modal-message">Voulez-vous vraiment effectuer cette action ?</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="btn-cancel-confirm-modal">Annuler</button>
+                <button type="button" class="btn btn-secondary" id="btn-cancel-confirm-modal">Annuler <kbd class="kbd-key">Échap</kbd></button>
                 <button type="button" class="btn btn-primary btn-danger-action"
-                    id="btn-save-confirm-modal">Confirmer</button>
+                    id="btn-save-confirm-modal">Confirmer <kbd class="kbd-key">Entrée</kbd></button>
             </div>
         </div>
     </div>
@@ -285,8 +290,8 @@
                 <input type="text" id="rename-page-input" placeholder="Nom de la page" maxlength="20" style="width: 100%; box-sizing: border-box; margin-top: 8px;">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="btn-cancel-rename-page-modal">Annuler</button>
-                <button type="button" class="btn btn-primary" id="btn-save-rename-page-modal">Valider</button>
+                <button type="button" class="btn btn-secondary" id="btn-cancel-rename-page-modal">Annuler <kbd class="kbd-key">Échap</kbd></button>
+                <button type="button" class="btn btn-primary" id="btn-save-rename-page-modal">Valider <kbd class="kbd-key">Entrée</kbd></button>
             </div>
         </div>
     </div>
@@ -313,13 +318,13 @@
             <div class="help-drawer-body">
                 <!-- FLEG / Latest additions section -->
                 <div class="help-section" style="border: 2px solid #10b981; background: rgba(16, 185, 129, 0.05); padding: 12px; border-radius: var(--radius-md);">
-                    <h4 style="color: #059669; border-bottom: 1.5px solid rgba(16, 185, 129, 0.2); margin-top: 0;">
-                        🥬 Gabarit & Mode FLEG (7x2)
+                    <h4 style="color: #059669; border-bottom: 1.5px solid rgba(16, 185, 129, 0.2); margin-top: 0; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-seedling" style="color: #059669;"></i> Gabarit & Mode FLEG (7x2)
                     </h4>
                     <ul style="padding-left: 16px; margin: 0; display: flex; flex-direction: column; gap: 8px;">
                         <li><strong>Grille 7x2 (14 étiquettes)</strong> : Gabarit standard de 14 étiquettes par page optimisé pour les dates Fruits & Légumes.</li>
                         <li><strong>Nouveau Calendrier</strong> : Un calendrier Auchan sur-mesure vous permet de sélectionner facilement et précisément la date des étiquettes.</li>
-                        <li><strong>Indicateur Onglet</strong> : L'émoji 🥬 s'affiche sur les onglets des pages configurées en mode FLEG.</li>
+                        <li><strong>Indicateur Onglet</strong> : L'icône <i class="fas fa-seedling" style="color: #059669;"></i> s'affiche sur les onglets des pages configurées en mode FLEG.</li>
                     </ul>
                 </div>
 
@@ -345,6 +350,7 @@
                         <li><strong>Ctrl + V (général)</strong> : Collez un texte/code depuis n'importe où pour générer
                             une nouvelle étiquette.</li>
                         <li><strong>SUPPR (Delete)</strong> : Supprime immédiatement l'étiquette sélectionnée.</li>
+                        <li><strong>Entrée / Échap</strong> : Valide/confirme ou annule instantanément n'importe quelle fenêtre pop-up (titre, impression, confirmation, renommage).</li>
                         <li><strong>Saisie Sidebar</strong> : Tapez une valeur, choisissez le type et cliquez sur
                             "Ajouter à la feuille".</li>
                     </ul>

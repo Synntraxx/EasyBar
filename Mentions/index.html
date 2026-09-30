@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mentions légales & Confidentialité — EasyBar</title>
+    <!-- Polices Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="../icon.png">
+    <style>
+        :root {
+            --bg-workspace: #e5e7eb;
+            --bg-card: #ffffff;
+            --primary-color: #d6180b;
+            --primary-hover: #b21207;
+            --primary-light: rgba(214, 24, 11, 0.08);
+            --text-dark: #1f2937;
+            --text-muted: #4b5563;
+            --text-light: #9ca3af;
+            --border-color: #e5e7eb;
+            --border-hover: #d1d5db;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 7px;
+            --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-workspace);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px 16px 48px;
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 760px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* En-tête de navigation */
+        .page-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 4px;
+        }
+
+        .brand-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text-dark);
+        }
+
+        .brand-logo {
+            width: 30px;
+            height: 30px;
+            object-fit: contain;
+        }
+
+        .brand-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .red-accent {
+            color: var(--primary-color);
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--bg-card);
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 7px;
+        }
+
+        .btn-back:hover {
+            background-color: #f9fafb;
+            color: var(--primary-color);
+        }
+
+        /* Carte principale */
+        .content-card {
+            background-color: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 36px 36px 40px;
+            box-shadow: var(--shadow-card);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-header {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .card-header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            align-self: flex-start;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            border-radius: 6px;
+        }
+
+        .card-title {
+            font-weight: 700;
+            color: var(--text-dark);
+            letter-spacing: -0.5px;
+        }
+
+        .card-subtitle {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        /* Section Items */
+        .mentions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            list-style: none;
+        }
+
+        .mention-item {
+            display: flex;
+            gap: 18px;
+            border-radius: var(--radius-md);
+        }
+
+        .mention-icon {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            background-color: #ffffff;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            border-radius: 7px;
+            border: 2px solid var(--border-color);
+        }
+
+        .mention-content {
+            flex: 1;
+            font-size: 0.925rem;
+            color: var(--text-dark);
+        }
+
+        .mention-label {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge-tag {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #059669;
+        }
+
+        .mention-desc {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            line-height: 1.55;
+            font-weight: 600;
+        }
+
+        .mention-desc a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .mention-desc a:hover {
+            color: var(--primary-hover);
+        }
+
+        /* Footer */
+        .page-footer {
+            text-align: center;
+            padding: 12px 0 0;
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .page-footer a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .page-footer a:hover {
+            color: var(--primary-color);
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 16px 12px 32px;
+            }
+
+            .content-card {
+                padding: 24px 18px 28px;
+            }
+
+            .card-title {
+                font-size: 1.35rem;
+            }
+
+            .mention-item {
+                flex-direction: column;
+                gap: 12px;
+                padding: 16px;
+            }
+
+            .mention-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Barre supérieure de navigation -->
+        <header class="page-nav">
+            <a href="../" class="brand-link" title="Retour à EasyBar">
+                <img class="brand-logo" src="../icon.png" alt="EasyBar Logo">
+                <span class="brand-title">Easy<span class="red-accent">Bar</span></span>
+            </a>
+            <a href="../" class="btn-back">
+                <i class="fas fa-arrow-left"></i>
+                Retour à l'application
+            </a>
+        </header>
+
+        <!-- Carte des mentions légales -->
+        <main class="content-card">
+            <div class="card-header">
+                <div class="card-header-badge">
+                    <i class="fas fa-info-circle"></i> Informations légales
+                </div>
+                <h1 class="card-title">Mentions légales &amp; Confidentialité</h1>
+                <p class="card-subtitle">Transparence, données personnelles et cadre d'utilisation d'EasyBar.</p>
+            </div>
+
+            <ul class="mentions-list">
+                <!-- Éditeur -->
+                <li class="mention-item">
+                    <div class="mention-icon">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="mention-content">
+                        <div class="mention-label">Éditeur</div>
+                        <p class="mention-desc">
+                            Projet indépendant développé par <strong>Sanier Matthis</strong>. Contact :
+                            <a href="mailto:saniermatthis@gmail.com">
+                                <i class="fas fa-envelope"></i> saniermatthis@gmail.com
+                            </a>.
+                        </p>
+                    </div>
+                </li>
+
+                <!-- Hébergement -->
+                <li class="mention-item">
+                    <div class="mention-icon">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div class="mention-content">
+                        <div class="mention-label">Hébergement</div>
+                        <p class="mention-desc">
+                            <strong>GitHub Pages</strong> — GitHub, Inc., 88 Colin P Kelly Jr St, San Francisco, CA
+                            94107, USA.
+                        </p>
+                    </div>
+                </li>
+
+                <!-- Données personnelles & Cookies -->
+                <li class="mention-item">
+                    <div class="mention-icon">
+                        <i class="fas fa-shield-halved"></i>
+                    </div>
+                    <div class="mention-content">
+                        <div class="mention-label">
+                            Données personnelles &amp; Cookies
+                            <span class="badge-tag"><i class="fas fa-lock"></i> 100% Local</span>
+                        </div>
+                        <p class="mention-desc">
+                            Ce site n'utilise aucun cookie de traçage, aucun outil d'analyse d'audience et ne collecte
+                            aucune donnée personnelle. L'ensemble des données créées (codes-barres, textes) reste stocké
+                            localement sur votre appareil via le stockage de votre navigateur
+                            (<code>localStorage</code>).
+                        </p>
+                    </div>
+                </li>
+
+                <!-- Clause de non-affiliation -->
+                <li class="mention-item">
+                    <div class="mention-icon">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                    <div class="mention-content">
+                        <div class="mention-label">Clause de non-affiliation</div>
+                        <p class="mention-desc">
+                            EasyBar est un outil indépendant développé à des fins d'assistance opérationnelle. La marque
+                            et le logo Auchan sont la propriété exclusive de la société Auchan Hypermarchés / ELO. Ce
+                            projet n'est ni sponsorisé, ni validé officiellement par le groupe Auchan.
+                        </p>
+                    </div>
+                </li>
+            </ul>
+        </main>
+
+        <!-- Pied de page -->
+        <footer class="page-footer">
+            <p>EasyBar &copy; 2026 — Outil indépendant d'assistance opérationnelle.</p>
+        </footer>
+    </div>
+</body>
+
+</html>

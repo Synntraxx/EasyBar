@@ -303,6 +303,38 @@ document.addEventListener('DOMContentLoaded', () => {
         return dateStr;
     }
 
+    function getPrintFooterText(pageNum) {
+        const pageSet = getPageSettings(pageNum);
+        const dateInputEl = document.getElementById('page-date-input');
+        const rawDate = (pageSet && pageSet.dateValue) ? pageSet.dateValue : (dateInputEl && dateInputEl.value ? dateInputEl.value : today);
+
+        let dateObj = null;
+        if (rawDate) {
+            if (rawDate.includes('-')) {
+                const parts = rawDate.split('-');
+                if (parts.length === 3) {
+                    dateObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                }
+            } else if (rawDate.includes('/')) {
+                const parts = rawDate.split('/');
+                if (parts.length === 3) {
+                    dateObj = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+                }
+            }
+        }
+        if (!dateObj || isNaN(dateObj.getTime())) {
+            dateObj = new Date();
+        }
+        const monthsFR = [
+            "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+            "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+        ];
+        const day = dateObj.getDate();
+        const month = monthsFR[dateObj.getMonth()];
+        const year = dateObj.getFullYear();
+        return `Imprimer le ${day} ${month} ${year}`;
+    }
+
     // ==========================================================================
     // INITIALISATION ET RENDU DOM DES CARTES DE CODES-BARRES
     // ==========================================================================
@@ -550,7 +582,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // GUIDES D'AIMANTATION MAGNÉTIQUE (STYLE INSTAGRAM STORIES)
     // ==========================================================================
     let guideTimeoutV = null;
-    let guideTimeoutH = null;
+    let guideTimeoutHMiddle = null;
+    let guideTimeoutHTop = null;
+    let guideTimeoutHBottom = null;
 
     function ensureSnapGuides() {
         if (!printSheet) return;
@@ -560,17 +594,29 @@ document.addEventListener('DOMContentLoaded', () => {
             gv.className = 'snap-guide-line snap-guide-v';
             printSheet.appendChild(gv);
         }
+        if (!document.getElementById('guide-horizontal-top')) {
+            const ght = document.createElement('div');
+            ght.id = 'guide-horizontal-top';
+            ght.className = 'snap-guide-line snap-guide-h snap-guide-h-top';
+            printSheet.appendChild(ght);
+        }
         if (!document.getElementById('guide-horizontal')) {
             const gh = document.createElement('div');
             gh.id = 'guide-horizontal';
-            gh.className = 'snap-guide-line snap-guide-h';
+            gh.className = 'snap-guide-line snap-guide-h snap-guide-h-middle';
             printSheet.appendChild(gh);
+        }
+        if (!document.getElementById('guide-horizontal-bottom')) {
+            const ghb = document.createElement('div');
+            ghb.id = 'guide-horizontal-bottom';
+            ghb.className = 'snap-guide-line snap-guide-h snap-guide-h-bottom';
+            printSheet.appendChild(ghb);
         }
     }
 
     function showSnapGuide(dir, duration = null) {
         ensureSnapGuides();
-        if (dir === 'v' || dir === 'both') {
+        if (dir === 'v' || dir === 'both' || dir === 'both-top' || dir === 'both-bottom' || dir === 'all') {
             const guideV = document.getElementById('guide-vertical');
             if (guideV) {
                 if (guideTimeoutV) clearTimeout(guideTimeoutV);
@@ -583,15 +629,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
-        if (dir === 'h' || dir === 'both') {
+        if (dir === 'h' || dir === 'h-middle' || dir === 'both' || dir === 'all') {
             const guideH = document.getElementById('guide-horizontal');
             if (guideH) {
-                if (guideTimeoutH) clearTimeout(guideTimeoutH);
+                if (guideTimeoutHMiddle) clearTimeout(guideTimeoutHMiddle);
                 guideH.classList.add('visible');
                 if (duration) {
-                    guideTimeoutH = setTimeout(() => {
+                    guideTimeoutHMiddle = setTimeout(() => {
                         guideH.classList.remove('visible');
-                        guideTimeoutH = null;
+                        guideTimeoutHMiddle = null;
+                    }, duration);
+                }
+            }
+        }
+        if (dir === 'h-top' || dir === 'both-top' || dir === 'all') {
+            const guideHTop = document.getElementById('guide-horizontal-top');
+            if (guideHTop) {
+                if (guideTimeoutHTop) clearTimeout(guideTimeoutHTop);
+                guideHTop.classList.add('visible');
+                if (duration) {
+                    guideTimeoutHTop = setTimeout(() => {
+                        guideHTop.classList.remove('visible');
+                        guideTimeoutHTop = null;
+                    }, duration);
+                }
+            }
+        }
+        if (dir === 'h-bottom' || dir === 'both-bottom' || dir === 'all') {
+            const guideHBottom = document.getElementById('guide-horizontal-bottom');
+            if (guideHBottom) {
+                if (guideTimeoutHBottom) clearTimeout(guideTimeoutHBottom);
+                guideHBottom.classList.add('visible');
+                if (duration) {
+                    guideTimeoutHBottom = setTimeout(() => {
+                        guideHBottom.classList.remove('visible');
+                        guideTimeoutHBottom = null;
                     }, duration);
                 }
             }
@@ -599,33 +671,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function hideSnapGuide(dir, delay = 0) {
-        if (dir === 'v' || dir === 'both') {
-            const guideV = document.getElementById('guide-vertical');
-            if (guideV) {
-                if (guideTimeoutV) clearTimeout(guideTimeoutV);
-                if (delay > 0) {
-                    guideTimeoutV = setTimeout(() => {
-                        guideV.classList.remove('visible');
-                        guideTimeoutV = null;
-                    }, delay);
-                } else {
-                    guideV.classList.remove('visible');
-                }
+        function hideEl(el, setTimeoutCb, clearTimeoutCb) {
+            if (!el) return;
+            clearTimeoutCb();
+            if (delay > 0) {
+                setTimeoutCb(setTimeout(() => {
+                    el.classList.remove('visible');
+                    setTimeoutCb(null);
+                }, delay));
+            } else {
+                el.classList.remove('visible');
             }
         }
-        if (dir === 'h' || dir === 'both') {
+
+        if (dir === 'v' || dir === 'both' || dir === 'all') {
+            const guideV = document.getElementById('guide-vertical');
+            hideEl(guideV, (t) => guideTimeoutV = t, () => { if (guideTimeoutV) clearTimeout(guideTimeoutV); });
+        }
+        if (dir === 'h' || dir === 'h-middle' || dir === 'both' || dir === 'all') {
             const guideH = document.getElementById('guide-horizontal');
-            if (guideH) {
-                if (guideTimeoutH) clearTimeout(guideTimeoutH);
-                if (delay > 0) {
-                    guideTimeoutH = setTimeout(() => {
-                        guideH.classList.remove('visible');
-                        guideTimeoutH = null;
-                    }, delay);
-                } else {
-                    guideH.classList.remove('visible');
-                }
-            }
+            hideEl(guideH, (t) => guideTimeoutHMiddle = t, () => { if (guideTimeoutHMiddle) clearTimeout(guideTimeoutHMiddle); });
+        }
+        if (dir === 'h' || dir === 'h-top' || dir === 'both' || dir === 'all') {
+            const guideHTop = document.getElementById('guide-horizontal-top');
+            hideEl(guideHTop, (t) => guideTimeoutHTop = t, () => { if (guideTimeoutHTop) clearTimeout(guideTimeoutHTop); });
+        }
+        if (dir === 'h' || dir === 'h-bottom' || dir === 'both' || dir === 'all') {
+            const guideHBottom = document.getElementById('guide-horizontal-bottom');
+            hideEl(guideHBottom, (t) => guideTimeoutHBottom = t, () => { if (guideTimeoutHBottom) clearTimeout(guideTimeoutHBottom); });
         }
     }
 
@@ -751,11 +824,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     hideSnapGuide('v', 120);
                 }
 
-                // Aimantation verticale
-                if (Math.abs(newTop - centerTop) <= centerTolerance) {
-                    newTop = centerTop;
-                    pctTop = bc ? (100 - bc.cardHeightPercent) / 2 : (centerTop / parentRect.height) * 100;
-                    showSnapGuide('h'); // Affiche le trait central horizontal
+                // Aimantation verticale : centrage au milieu (50%), en haut (25%) ou en bas (75%)
+                const topQuarter = (parentRect.height * 0.25) - (element.offsetHeight / 2);
+                const bottomQuarter = (parentRect.height * 0.75) - (element.offsetHeight / 2);
+
+                const distCenter = Math.abs(newTop - centerTop);
+                const distTopQuarter = (topQuarter >= -10) ? Math.abs(newTop - topQuarter) : Infinity;
+                const distBottomQuarter = (bottomQuarter <= maxTop + 10) ? Math.abs(newTop - bottomQuarter) : Infinity;
+
+                const minDist = Math.min(distCenter, distTopQuarter, distBottomQuarter);
+
+                if (minDist <= centerTolerance) {
+                    if (minDist === distTopQuarter) {
+                        newTop = topQuarter;
+                        pctTop = bc ? 25 - (bc.cardHeightPercent / 2) : (topQuarter / parentRect.height) * 100;
+                        showSnapGuide('h-top');
+                        hideSnapGuide('h-middle');
+                        hideSnapGuide('h-bottom');
+                    } else if (minDist === distCenter) {
+                        newTop = centerTop;
+                        pctTop = bc ? (100 - bc.cardHeightPercent) / 2 : (centerTop / parentRect.height) * 100;
+                        showSnapGuide('h-middle');
+                        hideSnapGuide('h-top');
+                        hideSnapGuide('h-bottom');
+                    } else {
+                        newTop = bottomQuarter;
+                        pctTop = bc ? 75 - (bc.cardHeightPercent / 2) : (bottomQuarter / parentRect.height) * 100;
+                        showSnapGuide('h-bottom');
+                        hideSnapGuide('h-top');
+                        hideSnapGuide('h-middle');
+                    }
                 } else if (newTop < edgeTolerance) {
                     newTop = 0;
                     pctTop = 0;
@@ -1325,6 +1423,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // MENU CONTEXTUEL PERSONNALISÉ AU CLIC DROIT CONSTANT
     // ==========================================================================
     document.addEventListener('contextmenu', (e) => {
+        // Désactiver le clic droit si une popup / modale est affichée
+        const isPopupOpen = !!document.querySelector('.modal-backdrop:not(.hidden), .help-backdrop:not(.hidden)') ||
+                            !!e.target.closest('.modal-backdrop, .help-backdrop, .modal-content');
+        if (isPopupOpen) {
+            e.preventDefault();
+            e.stopPropagation();
+            hideContextMenu();
+            return false;
+        }
+
         if (e.target.closest('input') || e.target.closest('select')) {
             return;
         }
@@ -1387,6 +1495,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             <li onclick="window.alignBarcode('center-v')">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="12" x2="22" y2="12"></line><rect x="8" y="6" width="8" height="12" rx="1"></rect></svg>
                                 Centrer V. (Milieu)
+                            </li>
+                            <li onclick="window.alignBarcode('center-top')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="6" x2="22" y2="6"></line><rect x="8" y="2" width="8" height="8" rx="1"></rect></svg>
+                                Centrer en haut (25%)
+                            </li>
+                            <li onclick="window.alignBarcode('center-bottom')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="18" x2="22" y2="18"></line><rect x="8" y="14" width="8" height="8" rx="1"></rect></svg>
+                                Centrer en bas (75%)
                             </li>
                             <li onclick="window.alignBarcode('center-both')">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
@@ -1744,7 +1860,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         showSnapGuide('v', 500);
                     } else if (type === 'center-v') {
                         bc.topPercent = (100 - bc.cardHeightPercent) / 2;
-                        showSnapGuide('h', 500);
+                        showSnapGuide('h-middle', 500);
+                    } else if (type === 'center-top') {
+                        bc.topPercent = 25 - (bc.cardHeightPercent / 2);
+                        showSnapGuide('h-top', 500);
+                    } else if (type === 'center-bottom') {
+                        bc.topPercent = 75 - (bc.cardHeightPercent / 2);
+                        showSnapGuide('h-bottom', 500);
                     } else if (type === 'center-both') {
                         bc.leftPercent = (100 - bc.cardWidthPercent) / 2;
                         bc.topPercent = (100 - bc.cardHeightPercent) / 2;
@@ -2389,35 +2511,182 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateConfirmPrintButtonState() {
         if (!btnConfirmPrint) return;
-        const checkedCount = document.querySelectorAll('.print-page-checkbox-card input:checked').length;
+        const checkboxes = document.querySelectorAll('.print-page-checkbox-card input[type="checkbox"]');
+        const checkedBoxes = Array.from(checkboxes).filter(chk => chk.checked);
+        const checkedCount = checkedBoxes.length;
+        const total = checkboxes.length;
+
         btnConfirmPrint.disabled = (checkedCount === 0);
+
+        const summaryEl = document.getElementById('print-modal-summary');
+        if (summaryEl) {
+            if (checkedCount === 0) {
+                summaryEl.innerHTML = '<span style="color: #ef4444; font-weight: 600;">Aucune page sélectionnée</span>';
+            } else if (checkedCount === 1) {
+                summaryEl.innerHTML = `<span><strong style="color: var(--text-dark);">${checkedCount}</strong> page sur ${total} sélectionnée</span>`;
+            } else {
+                summaryEl.innerHTML = `<span><strong style="color: var(--text-dark);">${checkedCount}</strong> pages sur ${total} sélectionnées</span>`;
+            }
+        }
     }
 
     function openPrintModal() {
         unselectBarcode();
+        hideContextMenu();
         if (printPagesList) {
             printPagesList.innerHTML = '';
+            printPagesList.style.setProperty('--preview-cols', Math.min(totalPages, 4));
+
             for (let i = 1; i <= totalPages; i++) {
-                const count = barcodes.filter(bc => bc.page === i).length;
+                const pageBarcodes = barcodes.filter(bc => bc.page === i);
+                const count = pageBarcodes.length;
                 const isCurrent = (i === activePage);
                 const pageSet = getPageSettings(i);
                 const pageName = (pageSet && pageSet.name) ? pageSet.name : `Page ${i}`;
+                const isFleg = (pageSet && pageSet.isDateMode);
+                const isGrid = (pageSet && pageSet.gridType !== 'free');
+
                 const card = document.createElement('div');
                 card.className = `print-page-checkbox-card ${isCurrent ? 'selected' : ''}`;
-                card.innerHTML = `
+                card.dataset.page = i;
+                card.tabIndex = 0;
+                card.setAttribute('role', 'checkbox');
+                card.setAttribute('aria-checked', isCurrent ? 'true' : 'false');
+
+                // En-tête de la carte avec case à cocher et titre
+                const header = document.createElement('div');
+                header.className = 'print-preview-card-header';
+                header.innerHTML = `
                     <input type="checkbox" id="print-chk-page-${i}" value="${i}" ${isCurrent ? 'checked' : ''}>
                     <div class="custom-checkbox-indicator">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" class="checkmark-icon">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
                     </div>
-                    <label for="print-chk-page-${i}" style="cursor: pointer; flex: 1; user-select: none;">${pageName} (${count} code${count > 1 ? 's' : ''})</label>
+                    <div class="print-preview-info">
+                        <div class="print-preview-title" title="${pageName}">
+                            <span>${pageName}</span>
+                            ${isFleg ? '<i class="fas fa-seedling print-preview-fleg-icon" title="Mode FLEG"></i>' : ''}
+                        </div>
+                    </div>
                 `;
+                card.appendChild(header);
 
-                // Gérer le clic sur le conteneur de la carte pour basculer la case à cocher
+                // Conteneur de l'aperçu miniature de la feuille A4
+                const sheetWrapper = document.createElement('div');
+                sheetWrapper.className = 'print-preview-sheet-wrapper';
+
+                const sheet = document.createElement('div');
+                sheet.className = 'print-preview-sheet';
+                if (isGrid) {
+                    sheet.classList.add(`template-${pageSet.gridType}`);
+                }
+
+                if (count === 0) {
+                    sheet.innerHTML = `
+                        <div class="print-preview-empty">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="9" y1="13" x2="15" y2="13"></line>
+                            </svg>
+                            <span>Feuille vide</span>
+                        </div>
+                    `;
+                } else {
+                    const gridConfig = isGrid ? getGridConfig(pageSet.gridType) : null;
+
+                    pageBarcodes.forEach(bc => {
+                        const cardEl = document.createElement('div');
+                        cardEl.className = 'draggable-barcode preview-barcode';
+                        if (bc.isDateOnly) {
+                            cardEl.classList.add('date-only-card');
+                        }
+
+                        let left = bc.leftPercent;
+                        let top = bc.topPercent;
+                        let w = bc.cardWidthPercent;
+                        let h = bc.cardHeightPercent;
+
+                        if (isGrid && gridConfig) {
+                            w = gridConfig.wPct;
+                            h = gridConfig.hPct;
+                            if (left === null || left === undefined || top === null || top === undefined) {
+                                const idx = pageBarcodes.indexOf(bc);
+                                const col = idx !== -1 ? (idx % gridConfig.cols) : 0;
+                                const row = idx !== -1 ? Math.floor(idx / gridConfig.cols) : 0;
+                                left = col * gridConfig.wPct;
+                                top = row * gridConfig.hPct;
+                            } else {
+                                const col = Math.max(0, Math.min(gridConfig.cols - 1, Math.round(left / gridConfig.wPct)));
+                                const row = Math.max(0, Math.min(gridConfig.rows - 1, Math.round(top / gridConfig.hPct)));
+                                left = col * gridConfig.wPct;
+                                top = row * gridConfig.hPct;
+                            }
+                        }
+
+                        cardEl.style.left = `${left}%`;
+                        cardEl.style.top = `${top}%`;
+                        cardEl.style.width = `${w}%`;
+                        cardEl.style.height = `${h}%`;
+
+                        // Ajouter l'en-tête avec titre et date éventuelle identique au rendu réel
+                        const headerEl = document.createElement('div');
+                        headerEl.className = 'barcode-card-header';
+
+                        const titleEl = document.createElement('span');
+                        titleEl.className = 'barcode-card-title';
+                        if (bc.title) {
+                            titleEl.textContent = bc.title.toUpperCase();
+                        } else {
+                            titleEl.classList.add('hidden');
+                        }
+                        headerEl.appendChild(titleEl);
+
+                        const dateEl = document.createElement('span');
+                        dateEl.className = 'barcode-card-date';
+                        if (!bc.isDateOnly && pageSet && pageSet.showDate && pageSet.dateValue) {
+                            dateEl.textContent = formatDate(pageSet.dateValue);
+                        } else {
+                            dateEl.classList.add('hidden');
+                        }
+                        headerEl.appendChild(dateEl);
+
+                        if (!bc.title && (bc.isDateOnly || !pageSet || !pageSet.showDate)) {
+                            headerEl.classList.add('hidden');
+                        }
+                        cardEl.appendChild(headerEl);
+
+                        if (bc.isDateOnly) {
+                            const dateValEl = document.createElement('div');
+                            dateValEl.className = 'date-only-value';
+                            dateValEl.textContent = formatDate(bc.value);
+                            cardEl.appendChild(dateValEl);
+                        } else {
+                            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                            svg.id = `prev_svg_${bc.id}_p${i}`;
+                            cardEl.appendChild(svg);
+                        }
+
+                        sheet.appendChild(cardEl);
+                    });
+                }
+
+                // Si la page est en mode Libre, afficher la date dans l'aperçu miniature
+                if (!isGrid) {
+                    const footerEl = document.createElement('div');
+                    footerEl.className = 'print-sheet-footer';
+                    footerEl.textContent = getPrintFooterText(i);
+                    sheet.appendChild(footerEl);
+                }
+
+                sheetWrapper.appendChild(sheet);
+                card.appendChild(sheetWrapper);
+
+                // Gérer le clic sur toute la carte pour basculer la sélection
                 card.addEventListener('click', (e) => {
-                    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
-                        const chk = card.querySelector('input');
+                    const chk = card.querySelector('input');
+                    if (e.target !== chk) {
                         chk.checked = !chk.checked;
                         chk.dispatchEvent(new Event('change'));
                     }
@@ -2427,13 +2696,79 @@ document.addEventListener('DOMContentLoaded', () => {
                 chk.addEventListener('change', () => {
                     if (chk.checked) {
                         card.classList.add('selected');
+                        card.setAttribute('aria-checked', 'true');
                     } else {
                         card.classList.remove('selected');
+                        card.setAttribute('aria-checked', 'false');
                     }
                     updateConfirmPrintButtonState();
                 });
 
+                // Raccourci Espace pour basculer la sélection au clavier
+                card.addEventListener('keydown', (e) => {
+                    if (e.key === ' ' || e.key === 'Spacebar') {
+                        e.preventDefault();
+                        if (chk) {
+                            chk.checked = !chk.checked;
+                            chk.dispatchEvent(new Event('change'));
+                        }
+                    }
+                });
+
                 printPagesList.appendChild(card);
+
+                // Génération vectorielle JsBarcode pour les SVG miniatures fidèle à la réalité
+                if (count > 0) {
+                    pageBarcodes.forEach(bc => {
+                        if (bc.isDateOnly) return;
+                        const svg = sheet.querySelector(`#prev_svg_${bc.id}_p${i}`);
+                        if (svg) {
+                            if (bc.format === 'EAN13') {
+                                const cleanNum = (bc.value || '').replace(/\D/g, '');
+                                if (cleanNum.length < 12 || cleanNum.length > 13) {
+                                    showFormatError(svg, "EAN13 requis : 12-13 chiffres");
+                                    return;
+                                }
+                            }
+
+                            const drawHeight = (isGrid ? 55 : (bc.height || 85));
+
+                            try {
+                                JsBarcode(svg, bc.value, {
+                                    format: bc.format || 'CODE128',
+                                    height: drawHeight,
+                                    width: bc.width || 2,
+                                    displayValue: (bc.displayValue !== undefined ? bc.displayValue : true),
+                                    background: "transparent",
+                                    lineColor: "#000000",
+                                    fontSize: 13,
+                                    fontWeight: 600,
+                                    font: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+                                    valid: function (valid) {
+                                        if (valid) {
+                                            const wAttr = svg.getAttribute('width');
+                                            const hAttr = svg.getAttribute('height');
+                                            if (wAttr && hAttr) {
+                                                const cleanW = wAttr.replace(/[^0-9.]/g, '');
+                                                const cleanH = hAttr.replace(/[^0-9.]/g, '');
+                                                svg.setAttribute('viewBox', `0 0 ${cleanW} ${cleanH}`);
+                                                svg.style.width = '100%';
+                                                svg.style.height = '100%';
+                                                svg.removeAttribute('width');
+                                                svg.removeAttribute('height');
+                                            }
+                                        } else {
+                                            showFormatError(svg, "Code Invalide");
+                                        }
+                                    }
+                                });
+                            } catch (err) {
+                                console.error("Erreur génération aperçu code-barres:", err);
+                                showFormatError(svg, "Erreur Format");
+                            }
+                        }
+                    });
+                }
             }
         }
         updateConfirmPrintButtonState();
@@ -2458,8 +2793,11 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSelectAllPages.addEventListener('click', () => {
             document.querySelectorAll('.print-page-checkbox-card').forEach(card => {
                 const chk = card.querySelector('input');
-                chk.checked = true;
-                card.classList.add('selected');
+                if (chk) {
+                    chk.checked = true;
+                    card.classList.add('selected');
+                    card.setAttribute('aria-checked', 'true');
+                }
             });
             updateConfirmPrintButtonState();
         });
@@ -2469,8 +2807,11 @@ document.addEventListener('DOMContentLoaded', () => {
         btnDeselectAllPages.addEventListener('click', () => {
             document.querySelectorAll('.print-page-checkbox-card').forEach(card => {
                 const chk = card.querySelector('input');
-                chk.checked = false;
-                card.classList.remove('selected');
+                if (chk) {
+                    chk.checked = false;
+                    card.classList.remove('selected');
+                    card.setAttribute('aria-checked', 'false');
+                }
             });
             updateConfirmPrintButtonState();
         });
@@ -2486,7 +2827,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (selectedPages.length === 0) {
-                alert("Veuillez sélectionner au moins une page à imprimer.");
+                showCustomAlert("Impression", "Veuillez sélectionner au moins une page à imprimer.");
                 return;
             }
 
@@ -2589,6 +2930,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 sheet.appendChild(card);
             });
+
+            // Si la page est en mode Libre, afficher la date en bas de la page à l'impression
+            const isGrid = (pageSet && pageSet.gridType !== 'free');
+            if (!isGrid) {
+                const footerEl = document.createElement('div');
+                footerEl.className = 'print-sheet-footer';
+                footerEl.textContent = getPrintFooterText(pageNum);
+                sheet.appendChild(footerEl);
+            }
 
             printOutputContainer.appendChild(sheet);
 

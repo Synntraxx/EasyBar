@@ -147,10 +147,10 @@
                     </svg>
                     Vider la page
                 </button>
-                <a href="Mentions/" class="sidebar-about-link" title="Mentions légales & Confidentialité">
-                    Mentions légales &amp; Confidentialité
-                </a>
             </div>
+            <a href="Mentions/" class="sidebar-about-link" title="Mentions légales & Confidentialité">
+                Mentions légales &amp; Confidentialité
+            </a>
         </aside>
 
         <!-- Espace de travail principal : feuille A4 -->
@@ -159,7 +159,9 @@
                 <div id="print-sheet" class="print-sheet">
                     <!-- Repères de centrage magnétique (style Instagram Story) -->
                     <div id="guide-vertical" class="snap-guide-line snap-guide-v"></div>
-                    <div id="guide-horizontal" class="snap-guide-line snap-guide-h"></div>
+                    <div id="guide-horizontal-top" class="snap-guide-line snap-guide-h snap-guide-h-top"></div>
+                    <div id="guide-horizontal" class="snap-guide-line snap-guide-h snap-guide-h-middle"></div>
+                    <div id="guide-horizontal-bottom" class="snap-guide-line snap-guide-h snap-guide-h-bottom"></div>
                 </div>
             </div>
             <div class="workspace-tabs-container">
@@ -239,32 +241,49 @@
 
     <!-- Fenêtre modale de sélection de l'impression -->
     <div id="print-modal" class="modal-backdrop hidden">
-        <div class="modal-content">
+        <div class="modal-content modal-print-content">
             <div class="modal-header">
-                <h2>Impression multipage</h2>
-                <button type="button" class="btn-close-modal" id="btn-close-print-modal">&times;</button>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="modal-icon-badge"
+                        style="width: 32px; height: 32px; border-radius: 8px; background: rgba(214, 24, 11, 0.1); display: flex; align-items: center; justify-content: center; color: var(--primary-color);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                            style="width: 18px; height: 18px;">
+                            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                            <rect x="6" y="14" width="12" height="8"></rect>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: var(--text-dark);">Impression
+                            multipage</h2>
+                        <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">Aperçu et sélection des
+                            pages à imprimer</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close-modal" id="btn-close-print-modal" title="Fermer">&times;</button>
             </div>
-            <div class="modal-body">
-                <p style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-muted);">Sélectionnez les pages que
-                    vous souhaitez imprimer :</p>
+            <div class="modal-body modal-print-body">
+                <div class="print-modal-toolbar">
+                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-dark);">Feuilles disponibles
+                        :</span>
+                    <div class="print-pages-actions">
+                        <button type="button" class="btn-link" id="btn-select-all-pages">Tout cocher</button>
+                        <span class="divider" style="color: var(--text-light); margin: 0 4px;">/</span>
+                        <button type="button" class="btn-link" id="btn-deselect-all-pages">Tout décocher</button>
+                    </div>
+                </div>
                 <div id="print-pages-list" class="print-pages-list">
-                    <!-- Les cases à cocher dynamiques iront ici -->
-                </div>
-                <div class="print-pages-actions" style="margin-top: 12px; display: flex; gap: 8px; font-size: 0.8rem;">
-                    <button type="button" class="btn-link" id="btn-select-all-pages"
-                        style="background: none; border: none; color: var(--primary-color); cursor: pointer; padding: 0; font-size: 0.9rem; font-weight: 600;font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;">Tout
-                        cocher</button>
-                    <span class="divider" style="color: var(--text-light);">/</span>
-                    <button type="button" class="btn-link" id="btn-deselect-all-pages"
-                        style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0; font-size: 0.9rem; font-weight: 600;font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;">Tout
-                        décocher</button>
+                    <!-- Les aperçus dynamiques iront ici -->
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="btn-cancel-print-modal">Annuler <kbd
-                        class="kbd-key">Échap</kbd></button>
-                <button type="button" class="btn btn-primary" id="btn-confirm-print">Lancer l'impression <kbd
-                        class="kbd-key">Entrée</kbd></button>
+            <div class="modal-footer modal-print-footer">
+                <div class="print-modal-summary" id="print-modal-summary"></div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-print-modal">Annuler <kbd
+                            class="kbd-key">Échap</kbd></button>
+                    <button type="button" class="btn btn-primary" id="btn-confirm-print">Lancer l'impression <kbd
+                            class="kbd-key">Entrée</kbd></button>
+                </div>
             </div>
         </div>
     </div>

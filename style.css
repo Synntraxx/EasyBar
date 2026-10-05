@@ -76,6 +76,7 @@ body {
     border-radius: 10px;
     margin: 20px 0 20px 20px;
     padding: 24px;
+    padding-bottom: 10px;
     display: flex;
     flex-direction: column;
     height: calc(100vh - 40px);
@@ -341,6 +342,7 @@ input[type="text"]:focus,
     text-decoration: none;
     border-radius: var(--radius-sm);
     transition: var(--transition);
+    margin-top: -5px;
 }
 
 .sidebar-about-link:hover {
@@ -383,11 +385,15 @@ input[type="text"]:focus,
     overflow: visible;
 }
 
-/* Modèles de superposition de grille de feuille d'impression */
+/* Modèles de superposition de grille de feuille d'impression et d'aperçu */
 .print-sheet.template-grid-12::before,
 .print-sheet.template-grid-24::before,
 .print-sheet.template-grid-8::before,
-.print-sheet.template-grid-14::before {
+.print-sheet.template-grid-14::before,
+.print-preview-sheet.template-grid-12::before,
+.print-preview-sheet.template-grid-24::before,
+.print-preview-sheet.template-grid-8::before,
+.print-preview-sheet.template-grid-14::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -400,7 +406,8 @@ input[type="text"]:focus,
 }
 
 /* Modèle 12 étiquettes (2 colonnes, 6 lignes - 105x49 mm) */
-.print-sheet.template-grid-12::before {
+.print-sheet.template-grid-12::before,
+.print-preview-sheet.template-grid-12::before {
     background-image:
         linear-gradient(to right, transparent calc(50% - 0.5px), rgba(0, 0, 0, 0.12) calc(50% - 0.5px), rgba(0, 0, 0, 0.12) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
         linear-gradient(to bottom,
@@ -412,7 +419,8 @@ input[type="text"]:focus,
 }
 
 /* Modèle 24 étiquettes (3 colonnes, 8 lignes - 70x37 mm) */
-.print-sheet.template-grid-24::before {
+.print-sheet.template-grid-24::before,
+.print-preview-sheet.template-grid-24::before {
     background-image:
         linear-gradient(to right,
             transparent calc(100% / 3 * 1 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 3 * 1 - 0.5px), rgba(0, 0, 0, 0.12) calc(100% / 3 * 1 + 0.5px), transparent calc(100% / 3 * 1 + 0.5px),
@@ -428,7 +436,8 @@ input[type="text"]:focus,
 }
 
 /* Modèle 8 étiquettes (2 colonnes, 4 lignes - 105x74 mm) */
-.print-sheet.template-grid-8::before {
+.print-sheet.template-grid-8::before,
+.print-preview-sheet.template-grid-8::before {
     background-image:
         linear-gradient(to right, transparent calc(50% - 0.5px), rgba(0, 0, 0, 0.12) calc(50% - 0.5px), rgba(0, 0, 0, 0.12) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
         linear-gradient(to bottom,
@@ -438,7 +447,8 @@ input[type="text"]:focus,
 }
 
 /* Modèle 14 étiquettes (2 colonnes, 7 lignes - 7x2 FLEG) */
-.print-sheet.template-grid-14::before {
+.print-sheet.template-grid-14::before,
+.print-preview-sheet.template-grid-14::before {
     background-image:
         linear-gradient(to right, transparent calc(50% - 0.5px), rgba(0, 0, 0, 0.12) calc(50% - 0.5px), rgba(0, 0, 0, 0.12) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
         linear-gradient(to bottom,
@@ -492,6 +502,21 @@ input[type="text"]:focus,
     height: 2px;
     background: rgba(0, 0, 0, 0.12);
     transform: translateY(-50%);
+}
+
+.snap-guide-h.snap-guide-h-top,
+#guide-horizontal-top {
+    top: 25%;
+}
+
+.snap-guide-h.snap-guide-h-middle,
+#guide-horizontal {
+    top: 50%;
+}
+
+.snap-guide-h.snap-guide-h-bottom,
+#guide-horizontal-bottom {
+    top: 75%;
 }
 
 
@@ -1396,6 +1421,54 @@ body.dragging-active * {
     #print-output-container .barcode-inline-edit-box {
         display: none !important;
     }
+
+    #print-output-container .print-sheet-footer {
+        position: absolute !important;
+        bottom: 12mm !important;
+        left: 0 !important;
+        right: 0 !important;
+        text-align: center !important;
+        font-size: 11pt !important;
+        font-weight: 500 !important;
+        color: #374151 !important;
+        visibility: visible !important;
+        display: block !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    }
+}
+
+/* ==========================================================================
+   PIED DE PAGE DE LA FEUILLE D'IMPRESSION (MODE LIBRE)
+   ========================================================================== */
+.print-sheet-footer {
+    position: absolute;
+    bottom: 12mm;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 11pt;
+    font-weight: 500;
+    color: #4b5563;
+    pointer-events: none;
+    user-select: none;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: 0.02em;
+}
+
+.print-preview-sheet .print-sheet-footer {
+    position: absolute;
+    bottom: 8px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 5px;
+    font-weight: 500;
+    color: #6b7280;
+    pointer-events: none;
+    user-select: none;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: 0.02em;
+    z-index: 10;
 }
 
 /* ==========================================================================
@@ -1485,50 +1558,186 @@ body.dragging-active * {
     color: var(--primary-color);
 }
 
-/* Liste des cases à cocher des pages dans la modale d'impression */
-.print-pages-list {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    margin-top: 10px;
+/* ==========================================================================
+   BOÎTE MODALE D'IMPRESSION MULTIPAGE AVEC APERÇUS VISUELS DES PAGES
+   ========================================================================== */
+.modal-print-content {
+    max-width: 940px !important;
+    width: 95vw !important;
+    max-height: 92vh !important;
+    padding: 24px !important;
+    gap: 16px !important;
+    box-sizing: border-box;
 }
 
-.print-page-checkbox-card {
+.modal-print-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 0;
+}
+
+.print-modal-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-bottom: 2px;
+}
+
+.print-pages-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius-md);
+    gap: 6px;
+}
+
+.print-pages-actions .btn-link {
+    background: none;
+    border: none;
+    color: var(--primary-color);
     cursor: pointer;
-    transition: var(--transition);
+    padding: 3px 8px;
     font-size: 0.85rem;
     font-weight: 600;
+    font-family: inherit;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+}
+
+.print-pages-actions .btn-link:hover {
+    background: var(--primary-light);
+}
+
+.print-pages-actions #btn-deselect-all-pages {
+    color: var(--text-muted);
+}
+
+.print-pages-actions #btn-deselect-all-pages:hover {
+    background: #f1f5f9;
     color: var(--text-dark);
+}
+
+/* Grille des cartes d'aperçu des pages */
+.print-pages-list {
+    display: grid;
+    grid-template-columns: repeat(var(--preview-cols, 2), minmax(0, 1fr));
+    gap: 16px;
+    overflow-y: auto;
+    max-height: calc(90vh - 220px);
+    padding: 6px 4px;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+
+@media (max-width: 920px) {
+    .print-pages-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 580px) {
+    .print-pages-list {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Carte de sélection et d'aperçu de page */
+.print-page-checkbox-card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 10px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background-color: #ffffff;
+    cursor: pointer;
+    position: relative;
     user-select: none;
+    box-sizing: border-box;
 }
 
 .print-page-checkbox-card:hover {
-    border-color: var(--primary-color);
-    background-color: var(--primary-light);
+    border-color: #cbd5e1;
+}
+
+.print-page-checkbox-card:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
 }
 
 .print-page-checkbox-card.selected {
     border-color: var(--primary-color);
-    background-color: var(--primary-light);
-    color: var(--primary-color);
-    font-weight: 700;
+    background-color: #ffffff;
 }
+
+.print-page-checkbox-card:not(.selected) {
+    background-color: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.print-page-checkbox-card:not(.selected) .print-preview-sheet {
+    opacity: 0.45;
+    filter: grayscale(60%);
+}
+
 
 .print-page-checkbox-card input[type="checkbox"] {
     display: none;
 }
 
+/* En-tête de la carte d'aperçu */
+.print-preview-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.print-preview-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.print-preview-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.90rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.15s ease;
+}
+
+.print-preview-title span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.print-preview-fleg-icon {
+    color: #059669;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.print-page-checkbox-card.selected .print-preview-title {
+    color: var(--primary-color);
+}
+
+/* Indicateur de case à cocher personnalisée */
 .custom-checkbox-indicator {
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     border: 2px solid var(--border-color);
-    border-radius: 4px;
+    border-radius: 6px;
     background-color: #ffffff;
     display: flex;
     align-items: center;
@@ -1539,8 +1748,8 @@ body.dragging-active * {
 }
 
 .custom-checkbox-indicator .checkmark-icon {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     color: #ffffff;
     opacity: 0;
     transform: scale(0.5);
@@ -1555,6 +1764,113 @@ body.dragging-active * {
 .print-page-checkbox-card.selected .custom-checkbox-indicator .checkmark-icon {
     opacity: 1;
     transform: scale(1);
+}
+
+/* Conteneur et feuille d'aperçu miniature A4 */
+.print-preview-sheet-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f1f5f9;
+    border-radius: var(--radius-md);
+    transition: background-color 0.2s ease;
+    box-sizing: border-box;
+}
+
+.print-page-checkbox-card.selected .print-preview-sheet-wrapper {
+    background: rgba(214, 24, 11, 0.03);
+}
+
+.print-preview-sheet {
+    position: relative;
+    width: 100%;
+    max-height: 535px;
+    aspect-ratio: 1 / 1.414;
+    background-color: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 3px;
+    overflow: hidden;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        filter 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Étiquette miniature à l'intérieur de l'aperçu A4 fidèle au rendu réel */
+.print-preview-sheet .draggable-barcode,
+.preview-barcode {
+    pointer-events: none !important;
+    user-select: none !important;
+    cursor: default !important;
+    border: 2px solid transparent !important;
+    box-shadow: none !important;
+    transition: none !important;
+}
+
+.print-preview-sheet .draggable-barcode:hover,
+.print-preview-sheet .draggable-barcode.selected {
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+.print-preview-sheet .barcode-resize-handle {
+    display: none !important;
+}
+
+.print-preview-sheet .barcode-card-title {
+    font-size: max(5.5px, 5cqw);
+    line-height: 1.1;
+}
+
+.print-preview-sheet .barcode-card-date {
+    font-size: max(4.5px, 4.2cqw);
+    line-height: 1.1;
+}
+
+.print-preview-sheet .date-only-value {
+    font-size: max(8px, 9cqw);
+}
+
+/* État feuille vide dans l'aperçu */
+.print-preview-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: #94a3b8;
+    background: rgba(248, 250, 252, 0.85);
+}
+
+.print-preview-empty svg {
+    width: 22px;
+    height: 22px;
+    stroke: #94a3b8;
+    stroke-dasharray: 2 2;
+}
+
+.print-preview-empty span {
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+
+/* Pied de page de la modale d'impression */
+.modal-print-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.print-modal-summary {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
 }
 
 #print-output-container {

@@ -8,8 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let totalPages = 1;
     let activePage = 1;
     let pageSettings = {}; // keyed by pageNumber: { gridType: 'free', showDate: false, dateValue: '' }
-    const localDate = new Date();
-    const today = `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, '0')}-${String(localDate.getDate()).padStart(2, '0')}`;
+    function getTodayISO() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+    let today = getTodayISO();
 
     // Nœuds DOM cibles
     const printSheet = document.getElementById('print-sheet');
@@ -275,11 +278,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // INITIALISATION ET RENDU DOM DES CARTES DE CODES-BARRES
     // ==========================================================================
     function getPageSettings(pageNum) {
+        today = getTodayISO();
         if (!pageSettings[pageNum]) {
-            pageSettings[pageNum] = { gridType: 'free', showDate: false, dateValue: '', isDateMode: false };
+            pageSettings[pageNum] = { gridType: 'free', showDate: false, dateValue: today, isDateMode: false };
         }
         if (pageSettings[pageNum].isDateMode === undefined) {
             pageSettings[pageNum].isDateMode = false;
+        }
+        if (!pageSettings[pageNum].dateValue) {
+            pageSettings[pageNum].dateValue = today;
         }
         return pageSettings[pageNum];
     }
@@ -304,35 +311,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getPrintFooterText(pageNum) {
-        const pageSet = getPageSettings(pageNum);
-        const dateInputEl = document.getElementById('page-date-input');
-        const rawDate = (pageSet && pageSet.dateValue) ? pageSet.dateValue : (dateInputEl && dateInputEl.value ? dateInputEl.value : today);
-
-        let dateObj = null;
-        if (rawDate) {
-            if (rawDate.includes('-')) {
-                const parts = rawDate.split('-');
-                if (parts.length === 3) {
-                    dateObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-                }
-            } else if (rawDate.includes('/')) {
-                const parts = rawDate.split('/');
-                if (parts.length === 3) {
-                    dateObj = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
-                }
-            }
-        }
-        if (!dateObj || isNaN(dateObj.getTime())) {
-            dateObj = new Date();
-        }
-        const monthsFR = [
-            "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-            "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+        // Toujours forcer la date du jour actuel pour la mention d'impression (ex. mardi 6 octobre 2026)
+        const dateObj = new Date();
+        const daysFR = [
+            "dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"
         ];
+        const monthsFR = [
+            "janvier", "février", "mars", "avril", "mai", "juin",
+            "juillet", "août", "septembre", "octobre", "novembre", "décembre"
+        ];
+        const dayName = daysFR[dateObj.getDay()];
         const day = dateObj.getDate();
         const month = monthsFR[dateObj.getMonth()];
         const year = dateObj.getFullYear();
-        return `Imprimer le ${day} ${month} ${year}`;
+        return `Imprimer le ${dayName} ${day} ${month} ${year}`;
     }
 
     // ==========================================================================
@@ -1220,6 +1212,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadState() {
+        today = getTodayISO();
         let saved = localStorage.getItem('easybar_state_v3');
         if (saved) {
             try {
@@ -1229,19 +1222,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 pageSettings = parsed.pageSettings || {};
 
                 // S'assurer que chaque page a ses paramètres par défaut s'ils manquent
+                // et FORCER la date du jour pour toutes les pages
                 for (let i = 1; i <= totalPages; i++) {
                     if (!pageSettings[i]) {
-                        pageSettings[i] = { gridType: 'free', showDate: false, dateValue: '', isDateMode: false };
+                        pageSettings[i] = { gridType: 'free', showDate: false, dateValue: today, isDateMode: false };
                     }
                     if (pageSettings[i].isDateMode === undefined) {
                         pageSettings[i].isDateMode = false;
                     }
+                    pageSettings[i].dateValue = today;
                 }
 
                 if (Array.isArray(parsed.barcodes)) {
                     parsed.barcodes.forEach(item => {
+                        // Forcer la date du jour pour les étiquettes de date FLEG
+                        const barcodeValue = item.isDateOnly ? today : item.value;
                         addNewBarcode(
-                            item.value,
+                            barcodeValue,
                             item.format,
                             item.cardWidthPercent,
                             item.cardHeightPercent,
@@ -1271,13 +1268,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 activePage = parsed.activePage || 1;
                 pageSettings = {};
                 for (let i = 1; i <= totalPages; i++) {
-                    pageSettings[i] = { gridType: 'free', showDate: false, dateValue: '' };
+                    pageSettings[i] = { gridType: 'free', showDate: false, dateValue: today };
                 }
 
                 if (Array.isArray(parsed.barcodes)) {
                     parsed.barcodes.forEach(item => {
+                        const barcodeValue = item.isDateOnly ? today : item.value;
                         addNewBarcode(
-                            item.value,
+                            barcodeValue,
                             item.format,
                             item.cardWidthPercent,
                             item.cardHeightPercent,
@@ -1287,7 +1285,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             item.title,
                             item.leftPercent,
                             item.topPercent,
-                            item.page || 1
+                            item.page || 1,
+                            item.isDateOnly || false
                         );
                     });
                     return true;
@@ -1305,7 +1304,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (Array.isArray(parsed) && parsed.length > 0) {
                     totalPages = 1;
                     activePage = 1;
-                    pageSettings = { 1: { gridType: 'free', showDate: false, dateValue: '' } };
+                    pageSettings = { 1: { gridType: 'free', showDate: false, dateValue: today } };
                     parsed.forEach(item => {
                         addNewBarcode(
                             item.value,
@@ -1397,7 +1396,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                renderBarcodeGraphics(bc);
+                if (bc.isDateOnly) {
+                    const dateValEl = card.querySelector('.date-only-value');
+                    if (dateValEl) {
+                        dateValEl.textContent = formatDate(bc.value);
+                    }
+                } else {
+                    renderBarcodeGraphics(bc);
+                }
                 saveState();
             }
             editBox.remove();
@@ -2455,8 +2461,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function addPage() {
         if (totalPages >= 4) return;
+        today = getTodayISO();
         totalPages++;
-        pageSettings[totalPages] = { gridType: 'free', showDate: false, dateValue: '', isDateMode: false };
+        pageSettings[totalPages] = { gridType: 'free', showDate: false, dateValue: today, isDateMode: false };
         switchPage(totalPages);
         updatePrintButtonLabel();
         saveState();
@@ -3101,6 +3108,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnGenerateDates) {
         btnGenerateDates.addEventListener('click', () => {
+            today = getTodayISO();
             const dateVal = dateInput.value || today;
 
             const activeBarcodesCount = barcodes.filter(bc => bc.page === activePage).length;
@@ -3137,12 +3145,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function fillPageWithDates(dateVal, gridType) {
+        today = getTodayISO();
+        const finalDateVal = dateVal || today;
         clearAllBarcodes();
 
         const pageSet = getPageSettings(activePage);
         if (pageSet) {
             pageSet.isDateMode = true;
-            pageSet.dateValue = dateVal;
+            pageSet.dateValue = finalDateVal;
             pageSet.gridType = gridType;
         }
 
@@ -3162,7 +3172,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         for (let i = 0; i < count; i++) {
-            addNewBarcode(dateVal, 'CODE128', w, h, 85, 2, true, '', null, null, activePage, true);
+            addNewBarcode(finalDateVal, 'CODE128', w, h, 85, 2, true, '', null, null, activePage, true);
         }
 
         applyPageSettingsToUI();
@@ -3223,8 +3233,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        today = getTodayISO();
         // Mettre à jour le champ de saisie de date
         if (dateInput) {
+            if (!pageSet.dateValue) {
+                pageSet.dateValue = today;
+            }
             dateInput.value = pageSet.dateValue || today;
         }
 
@@ -3264,6 +3278,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pageSet.gridType !== 'free') {
                 printSheet.classList.add(`template-${pageSet.gridType}`);
             }
+            // S'assurer que le pied de page reste masqué sur la page principale
+            const existingFooter = printSheet.querySelector('.print-sheet-footer');
+            if (existingFooter) {
+                existingFooter.remove();
+            }
         }
 
         // Redessiner tous les codes-barres de la page active
@@ -3288,20 +3307,25 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(calendarDropdown);
 
         // Surcharge de la date sur le champ de saisie pour garder le format ISO (AAAA-MM-JJ) dans la propriété
-        // mais afficher le format européen (JJ/MM/AAAA) dans la vue.
+        // mais afficher la date lisible complète avec le jour devant (ex. mardi 6 octobre 2026) dans la vue.
+        today = getTodayISO();
         let _dateValue = today;
         Object.defineProperty(dateInput, 'value', {
             get() {
                 return _dateValue;
             },
             set(val) {
-                // Si le format est déjà JJ/MM/AAAA, le convertir en AAAA-MM-JJ
                 let isoValue = val;
-                if (val && val.includes('/')) {
-                    const parts = val.split('/');
+                if (!isoValue) {
+                    isoValue = getTodayISO();
+                } else if (isoValue.includes('/')) {
+                    const parts = isoValue.split('/');
                     if (parts.length === 3) {
                         isoValue = `${parts[2]}-${parts[1]}-${parts[0]}`;
                     }
+                }
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(isoValue)) {
+                    isoValue = getTodayISO();
                 }
                 _dateValue = isoValue;
 
@@ -3309,20 +3333,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 dateInput.setAttribute('value', isoValue);
                 const nativeValueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
 
-                // Formater pour l'affichage : JJ/MM/AAAA
-                let displayVal = isoValue;
-                if (isoValue && isoValue.includes('-')) {
-                    const parts = isoValue.split('-');
-                    if (parts.length === 3) {
-                        displayVal = `${parts[2]}/${parts[1]}/${parts[0]}`;
-                    }
-                }
+                // Formater pour l'affichage : mardi 6 octobre 2026
+                const displayVal = formatDate(isoValue);
                 nativeValueSetter.call(dateInput, displayVal);
             },
             configurable: true
         });
 
         // Initialiser la valeur par défaut
+        today = getTodayISO();
         dateInput.value = today;
 
         let currentDate = new Date(); // suit le mois/année affiché dans le calendrier
@@ -3490,13 +3509,9 @@ document.addEventListener('DOMContentLoaded', () => {
             todayBtn.textContent = "Aujourd'hui";
             todayBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const now = new Date();
-                const formattedM = (now.getMonth() + 1).toString().padStart(2, '0');
-                const formattedD = now.getDate().toString().padStart(2, '0');
-                const newIsoVal = `${now.getFullYear()}-${formattedM}-${formattedD}`;
-
+                today = getTodayISO();
                 currentDate = new Date();
-                dateInput.value = newIsoVal;
+                dateInput.value = today;
                 dateInput.dispatchEvent(new Event('change'));
                 calendarDropdown.classList.add('hidden');
             });

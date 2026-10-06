@@ -846,7 +846,7 @@ body.dragging-active * {
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
     display: none;
-    width: 190px;
+    width: 200px;
     padding: 4px !important;
 }
 
@@ -1422,6 +1422,11 @@ body.dragging-active * {
         display: none !important;
     }
 
+    #print-output-container .date-only-value {
+        color: #000000 !important;
+        font-weight: 800 !important;
+    }
+
     #print-output-container .print-sheet-footer {
         position: absolute !important;
         bottom: 12mm !important;
@@ -1440,6 +1445,11 @@ body.dragging-active * {
 /* ==========================================================================
    PIED DE PAGE DE LA FEUILLE D'IMPRESSION (MODE LIBRE)
    ========================================================================== */
+#print-sheet .print-sheet-footer,
+.print-sheet:not(.print-preview-sheet) .print-sheet-footer {
+    display: none !important;
+}
+
 .print-sheet-footer {
     position: absolute;
     bottom: 12mm;
@@ -1456,6 +1466,7 @@ body.dragging-active * {
 }
 
 .print-preview-sheet .print-sheet-footer {
+    display: block !important;
     position: absolute;
     bottom: 8px;
     left: 0;

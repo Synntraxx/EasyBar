@@ -1,10 +1,10 @@
-# 🏷️ EasyBar — Générateur & Éditeur de Planches de Codes-Barres A4
+# EasyBar — Générateur & Éditeur de Planches de Codes-Barres A4
 
 EasyBar est un outil web SaaS interne haut de gamme, développé pour simplifier, accélérer et fiabiliser la création de planches d'étiquettes de codes-barres au format A4. Conçu selon la charte graphique et les besoins logistiques d'**Auchan**, il permet de générer des codes-barres vectoriels de précision industrielle, d'organiser des mises en page libres ou normées (grilles FLEG 7x2, planches de 12, 24 ou 8 étiquettes) et de garantir une impression *pixel-perfect*.
 
 ---
 
-## 🚀 Fonctionnalités Clés
+## Fonctionnalités Clés
 
 ### 1. Génération Multi-Formats & Précision Vectorielle
 *   **Symbologies supportées** : `CODE128` (standard logistique), `EAN-13` (grande distribution) et `CODE39` (alphanumérique).
@@ -39,7 +39,7 @@ EasyBar est un outil web SaaS interne haut de gamme, développé pour simplifier
 
 ---
 
-## 🛠️ Architecture Technique
+## Architecture Technique
 
 EasyBar est conçu avec un souci constant de performance, de sécurité et d'indépendance technologique :
 *   **Core** : HTML5 Sémantique & Vanilla JavaScript (ES6+). Aucun framework lourd (React/Angular/Vue) requis, assurant un chargement instantané.
@@ -48,7 +48,7 @@ EasyBar est conçu avec un souci constant de performance, de sécurité et d'ind
 
 ---
 
-## 🔒 Sécurité & Confidentialité (100% Local)
+## Sécurité & Confidentialité (100% Local)
 
 L'application EasyBar répond à des critères stricts de sécurité et de confidentialité pour l'environnement Auchan :
 *   **Exécution 100% Locale** : L'intégralité du traitement et de la génération des étiquettes s'effectue sur le poste utilisateur. L'application ne nécessite aucune communication réseau active pour fonctionner.
@@ -58,7 +58,7 @@ L'application EasyBar répond à des critères stricts de sécurité et de confi
 
 ---
 
-## 🖨️ Configuration Requise pour l'Impression Chrome / Edge
+## Configuration Requise pour l'Impression Chrome / Edge
 
 Pour que les étiquettes s'alignent parfaitement avec les planches autocollantes prédécoupées en magasin, appliquez les paramètres suivants dans la boîte de dialogue d'impression (raccourci `Ctrl + P`) :
 
@@ -72,7 +72,7 @@ Pour que les étiquettes s'alignent parfaitement avec les planches autocollantes
 
 ---
 
-## ⌨️ Guide de Démarrage Rapide
+## Guide de Démarrage Rapide
 
 1.  Ouvrez le fichier `index.html` dans Google Chrome ou Microsoft Edge.
 2.  **Ajouter un code-barres** :
@@ -91,13 +91,15 @@ Pour que les étiquettes s'alignent parfaitement avec les planches autocollantes
 
 ---
 
-## 📁 Structure du Projet
+## Structure du Projet
 
 ```bash
 ├── index.html     # Structure sémantique de l'application & modales
 ├── style.css      # Charte graphique Auchan, variables de design & styles d'impression
 ├── script.js      # Moteur logique (drag & drop, raccourcis, LocalStorage, calendrier)
 ├── icon.png       # Icône et logo officiel de l'application
+├── /Mentions/
+|   └── index.html # RGPD
 └── README.md      # Ce fichier de documentation
 ```
 
